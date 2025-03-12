@@ -151,7 +151,6 @@ fun RoomsScreen(
                                 Text(text = "No rooms yet!", style = TextStyle(color = Color.Gray, fontWeight = FontWeight.W200, textAlign = TextAlign.Center, fontSize = 20.sp))
                             }
                             else -> {
-                                //Text(text = "Found ${uiState.rooms.size} rooms!", style = TextStyle(color = Color.Gray, fontWeight = FontWeight.W200, textAlign = TextAlign.Center, fontSize = 30.sp))
                                 Box(Modifier.fillMaxSize()) {
                                     LazyColumn(
                                         modifier = Modifier.fillMaxSize(),
@@ -182,14 +181,14 @@ fun RoomsScreen(
                                         }
                                     }
                                     Box(Modifier
-                                        .fillMaxWidth()
+                                        .fillMaxWidth().padding(bottom = 16.dp)
                                         .align(Alignment.BottomCenter), contentAlignment = Alignment.Center){
                                         Text(
                                             "Long press on the room to delete!",
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
-                                            color = Color.Magenta
+                                            color = Color.Magenta,
                                         )
                                     }
                                 }

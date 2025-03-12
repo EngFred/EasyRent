@@ -73,7 +73,7 @@ class RoomsRepositoryImpl @Inject constructor(
             }
 
             Log.i(TAG, "Room insertion completed successfully and (cached).")
-            Resource.Success(room.id) // Always return success for the cached room
+            Resource.Success(room.id)
         } else {
             //TODO("We shall assume the person is updating room")
             Log.e(TAG, "Room with the same number already exists.")

@@ -1,6 +1,5 @@
 package com.engineerfred.easyrent.data.worker
 
-
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
@@ -19,7 +18,6 @@ import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
-
 
 @HiltWorker
 class UnpaidTenantsWorker @AssistedInject constructor(
@@ -46,15 +44,12 @@ class UnpaidTenantsWorker @AssistedInject constructor(
                 } else {
                     Log.d(TAG, "Found no tenants with balance!")
                 }
-                //removeNotification()
                 Result.success()
             } else {
-                //removeNotification()
                 Result.failure()
             }
         } catch (ex: Exception) {
             Log.e(TAG, "${ex.message}")
-            removeNotification()
             Result.retry()
         }
     }
@@ -86,8 +81,4 @@ class UnpaidTenantsWorker @AssistedInject constructor(
         return notification
     }
 
-    private fun removeNotification() {
-        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_ID)
-    }
 }
