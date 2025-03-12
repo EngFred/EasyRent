@@ -1,10 +1,8 @@
 package com.engineerfred.easyrent.presentation.nav
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.engineerfred.easyrent.presentation.nav.Graphs.AUTH_GRAPH
@@ -16,17 +14,6 @@ fun RootGraph(
     userId: String?,
     navController: NavHostController
 ) {
-
-    LaunchedEffect(userId) {
-        Log.i("MY_TAG", "RootGraph userId: $userId")
-//        if( userId != null ) {
-//            navController.navigate(MAIN_GRAPH) {
-//                popUpTo(AUTH_GRAPH) {
-//                    inclusive = true
-//                }
-//            }
-//        }
-    }
 
     NavHost(
         navController = navController,
