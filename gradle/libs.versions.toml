@@ -1,0 +1,80 @@
+[versions]
+agp = "8.9.0"
+kotlin = "2.1.0"
+coreKtx = "1.15.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+lifecycleRuntimeKtx = "2.8.7"
+activityCompose = "1.10.1"
+composeBom = "2025.02.00"
+
+ktorClientAndroid = "3.0.3"
+room = "2.6.1"
+hiltCommon = "1.2.0"
+hilt= "2.55"
+composeNavigation = "2.8.7"
+hiltComposeNavigation = "1.2.0"
+kspPlugin = "2.1.0-1.0.29"
+dataStorePreferences = "1.1.2"
+splashScreen = "1.1.0-rc01"
+viewModel = "2.8.7"
+coroutinesCore = "1.9.0"
+coroutinesAndroid = "1.9.0"
+lottieCompose = "6.4.1"
+material = "1.7.8"
+worker = "2.10.0"
+supabaseBom = "3.0.3"
+coilCompose = "3.0.4"
+glideCompose = "1.0.0-beta01"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+hilt-android = { group="com.google.dagger", name="hilt-android", version.ref = "hilt" }
+hilt-navigation-compose = { group="androidx.hilt", name="hilt-navigation-compose", version.ref = "hiltComposeNavigation" }
+hilt-android-compiler = { group="com.google.dagger", name="hilt-android-compiler", version.ref = "hilt" }
+hilt-common = { group="androidx.hilt", name="hilt-common", version.ref = "hiltCommon" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroid" }
+postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
+realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room"}
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room"}
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room"}
+core-splashscreen = { group = "androidx.core", name ="core-splashscreen", version.ref = "splashScreen"}
+datastore-preferences = { group="androidx.datastore", name="datastore-preferences", version.ref = "dataStorePreferences" }
+lifecycle-viewmodel = { group = "androidx.lifecycle", name ="lifecycle-viewmodel", version.ref = "viewModel"}
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name ="kotlinx-coroutines-core", version.ref = "coroutinesCore"}
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name ="kotlinx-coroutines-android", version.ref = "coroutinesAndroid"}
+navigation-compose = { group = "androidx.navigation", name ="navigation-compose", version.ref = "composeNavigation" }
+lottie-compose = { group = "com.airbnb.android", name="lottie-compose", version.ref = "lottieCompose" }
+material = { group = "androidx.compose.material", name="material", version.ref = "material" }
+supabase-storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt" }
+work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "worker" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+
+auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
+glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "glideCompose" }
+supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabaseBom" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref="kspPlugin" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref="hilt" }
+
