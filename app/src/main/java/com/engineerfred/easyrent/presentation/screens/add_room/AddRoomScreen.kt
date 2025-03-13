@@ -259,7 +259,7 @@ fun AddRoomScreen(
                         containerColor = MyPrimary,
                         disabledContainerColor = MyPrimary
                     ),
-                    enabled = !uiState.inserting && uiState.monthlyPaymentErrMessage == null && uiState.monthlyPayment.isNullOrEmpty().not() && uiState.roomNumberErrMessage == null && uiState.roomNumber.isNullOrEmpty().not()
+                    enabled = !uiState.inserting && uiState.monthlyPaymentErrMessage == null && uiState.monthlyPayment.isNullOrEmpty().not() && uiState.roomNumberErrMessage == null && uiState.roomNumber.isEmpty().not()
                 ) {
                     if( uiState.inserting ) {
                         CircularProgressIndicator(

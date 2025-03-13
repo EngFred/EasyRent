@@ -207,7 +207,7 @@ fun AddTenantScreen(
                             )
                         } else {
                             val roomNumberBtnText = when {
-                                uiState.roomNumber == null && uiState.availableRooms.isEmpty() && !uiState.fetchingAvailableRooms -> "No rooms available"
+                                uiState.roomNumber == null && uiState.availableRooms.isEmpty() -> "No rooms available"
                                 uiState.roomNumber != null -> "Room_${uiState.roomNumber}"
                                 else -> "Select Room"
                             }

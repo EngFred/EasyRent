@@ -1,6 +1,5 @@
 package com.engineerfred.easyrent.presentation.screens.profile.components
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size

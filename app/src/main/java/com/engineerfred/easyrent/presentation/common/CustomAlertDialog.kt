@@ -13,7 +13,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.engineerfred.easyrent.presentation.theme.MyError
-import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySecondary
 import com.engineerfred.easyrent.presentation.theme.MySurface
 

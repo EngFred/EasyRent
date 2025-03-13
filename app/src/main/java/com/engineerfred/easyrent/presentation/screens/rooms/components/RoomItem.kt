@@ -179,7 +179,11 @@ fun RoomItem(
                         color = MySurface
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(text = "Name: ${tenant?.name?.capitalize(Locale.ROOT)}", color = MySurface)
+                    Text(text = "Name: ${tenant?.name?.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.ROOT
+                        ) else it.toString()
+                    }}", color = MySurface)
                     Text(text = "Contact: ${tenant?.contact}", color = MySurface)
                     Text(text = "Email: ${tenant?.email ?: "N/A"}", color = MySurface)
                     Text(text = "Balance: UGX ${formatCurrency(tenant?.balance ?: 0F)}", color = MySurface)
@@ -223,7 +227,11 @@ fun RoomItem(
         CustomAlertDialog(
             title = "Delete Tenant",
             text1 = "Are you sure you want to remove ",
-            boldText1 = "${tenant?.name?.capitalize(Locale.ROOT)}? ",
+            boldText1 = "${tenant?.name?.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(
+                    Locale.ROOT
+                ) else it.toString()
+            }}? ",
             text2 = "from ",
             boldText2 = "ROOM ${room.roomNumber}? ",
             text3 = "This action cannot be undone.",
