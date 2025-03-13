@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.engineerfred.easyrent.constants.Constants.SUPABASE_URL
 import com.engineerfred.easyrent.domain.modals.Payment
 import java.io.ByteArrayOutputStream
 import java.text.NumberFormat
@@ -78,4 +79,7 @@ fun getCurrentMonthAndYear() : String {
     val currentDate = LocalDate.now()
     return "${currentDate.month.name}, ${currentDate.year}"
 }
+
+fun buildImageUrl(imageFileName: String) =
+    "$SUPABASE_URL/storage/v1/object/users-images/${imageFileName}"
 

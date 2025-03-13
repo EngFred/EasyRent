@@ -10,7 +10,5 @@ interface PaymentsRepository {
     suspend fun getUnsyncedPayments() : Resource<List<Payment>>
     suspend fun getAllTrashedPayments() : Resource<List<Payment>>
     suspend fun insertPayment(payment: Payment) : Resource<Unit>
-//    suspend fun updatePayment(payment: Payment) : Resource<Unit>
-//    suspend fun updatePaymentStatus(paymentId: Int) : Resource<Unit>
     suspend fun deletePayment(payment: Payment) : Resource<Unit>
 }

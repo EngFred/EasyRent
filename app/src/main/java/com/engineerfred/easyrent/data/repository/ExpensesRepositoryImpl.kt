@@ -12,11 +12,11 @@ import com.engineerfred.easyrent.domain.modals.Expense
 import com.engineerfred.easyrent.domain.repository.ExpensesRepository
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
@@ -34,60 +34,80 @@ class ExpensesRepositoryImpl @Inject constructor(
         private const val TAG = "ExpensesRepositoryImpl"
     }
 
-    private val authenticatedUserId = supabaseClient.auth.currentUserOrNull()?.id
     private val expensesDao = cacheDatabase.expenseDao()
 
     override suspend fun insertExpense(expense: Expense): Resource<Unit> {
-        return try {
-            val userId = getUserId()
-            if ( userId != null ) {
-                Log.d(TAG, "Inserting expense in cache...")
-                expensesDao.insertExpense(expense.copy(userId = userId).toExpenseEntity())
+        try {
+            val userId = prefsRepo.getUserId().firstOrNull()
+
+            if ( userId == null ) {
+                Log.e(TAG, "User is null")
+                return Resource.Error("User is not logged in")
+            }
+
+            Log.d(TAG, "Inserting expense in cache...")
+            expensesDao.insertExpense(expense.copy(userId = userId).toExpenseEntity())
+
+            try {
                 Log.d(TAG, "Inserting expense in supabase...")
                 val sbResult = supabaseClient.from(EXPENSES).insert(expense.copy( isSynced = true, userId = userId ).toExpenseDTO()){
                     select()
                 }.decodeSingleOrNull<ExpenseDto>()
+
                 sbResult?.let {
                     Log.d(TAG, "Updating cache...")
                     expensesDao.updateExpense(it.toExpenseEntity())
                 }
-                Log.i(TAG, "DONE INSERTING TENANT!!")
-                Resource.Success(Unit)
-            } else {
-                Log.e(TAG, "CURRENT USER IS NOT AUTHENTICATED!!")
-                Resource.Error("User is not authenticated!")
+            } catch (ex: Exception) {
+                Log.e(TAG, "Supabase insertion error: ${ex.message}")
             }
+
+            Log.i(TAG, "Expense inserted successfully!")
+            return Resource.Success(Unit)
 
         } catch (ex: Exception){
             Log.e(TAG, "${ex.message}")
-            Resource.Error("${ex.message}")
+            return Resource.Error("${ex.message}")
         }
     }
 
     override suspend fun cacheAllRemoteExpenses() {
         try {
-            val userId = getUserId()
-            if ( userId != null ) {
-                val remoteExpenses = supabaseClient.from(EXPENSES).select{
-                    filter { eq("user_id", userId) }
-                }.decodeList<ExpenseDto>()
-                expensesDao.cacheAllRemoteExpenses(remoteExpenses.map { it.toExpenseEntity() })
-                Resource.Success(Unit)
-            } else {
-                Resource.Error("User is not authenticated!")
+            val userId = prefsRepo.getUserId().firstOrNull()
+
+            if ( userId == null ) {
+                Log.e(TAG, "User is null")
+                return
             }
+
+            val remoteExpenses = supabaseClient.from(EXPENSES).select{
+                filter { eq("user_id", userId) }
+            }.decodeList<ExpenseDto>()
+
+            expensesDao.cacheAllRemoteExpenses(remoteExpenses.map { it.toExpenseEntity() })
 
         } catch (ex: Exception){
             Log.e(TAG, "${ex.message}")
-            Resource.Error("${ex.message}")
         }
     }
 
     override suspend fun deleteExpense(expense: Expense): Resource<Unit> {
-        return try {
-            val userId = getUserId()
-            if ( userId != null ) {
-                expensesDao.updateExpense(expense.copy(isDeleted = true, isSynced = false).toExpenseEntity())
+        try {
+            val userId = prefsRepo.getUserId().firstOrNull()
+
+            if ( userId == null ) {
+                Log.e(TAG, "User is null")
+                return Resource.Error("User is not logged in")
+            }
+
+            if ( userId != expense.userId ) {
+                Log.e(TAG, "User id mismatch")
+                return Resource.Error("Can't delete expense")
+            }
+
+            expensesDao.updateExpense(expense.copy(isDeleted = true, isSynced = false).toExpenseEntity())
+
+            try {
                 val result = supabaseClient.from(EXPENSES).delete {
                     select()
                     filter {
@@ -95,48 +115,57 @@ class ExpensesRepositoryImpl @Inject constructor(
                         eq("user_id", userId)
                     }
                 }.decodeSingleOrNull<ExpenseDto>()
+
                 result?.let { expensesDao.deleteExpense(expense.toExpenseEntity()) }
-                Resource.Success(Unit)
-            } else {
-                Resource.Error("User is not authenticated!")
+            }catch (ex: Exception) {
+                Log.e(TAG, "Supabase expense deletion error: ${ex.message}")
             }
+
+            return Resource.Success(Unit)
         } catch (ex: Exception){
             Log.e(TAG, "${ex.message}")
-            Resource.Error("${ex.message}")
+            return Resource.Error("${ex.message}")
         }
     }
 
     override fun getAllExpenses(): Flow<Resource<List<Expense>>> = flow {
         val userID = prefsRepo.getUserId().firstOrNull()
-        if ( userID != null ) {
-            val expensesFlow = expensesDao.getAllExpenses( userID ).map { cachedExpenses ->
-                if ( cachedExpenses.isEmpty() ) {
-                    val results = supabaseClient.from(EXPENSES).select{
-                        filter { eq("user_id", userID) }
-                    }.decodeList<ExpenseDto>()
-                    if ( results.isNotEmpty() ) {
-                        expensesDao.cacheAllRemoteExpenses(results.map { it.toExpenseEntity() })
-                    }
-                }
-                Resource.Success(cachedExpenses.map { it.toExpense() })
-            }
-            emitAll(expensesFlow)
-        } else {
-            emit(Resource.Error("User is not authenticated"))
+
+        if ( userID == null ) {
+            Log.e(TAG, "User is null")
+            emit(Resource.Error("User is not logged in"))
+            return@flow
         }
+
+        val expensesFlow = expensesDao.getAllExpenses( userID ).map { cachedExpenses ->
+            if ( cachedExpenses.isEmpty() ) {
+                val results = supabaseClient.from(EXPENSES).select{
+                    filter { eq("user_id", userID) }
+                }.decodeList<ExpenseDto>()
+
+                if ( results.isNotEmpty() ) {
+                    expensesDao.cacheAllRemoteExpenses(results.map { it.toExpenseEntity() })
+                }
+            }
+            Resource.Success(cachedExpenses.map { it.toExpense() })
+        }
+        emitAll(expensesFlow)
     }.catch {
         emit(Resource.Error("${it.message}"))
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).distinctUntilChanged()
 
     override suspend fun getAllTrashedExpenses(): List<Expense> {
         try {
-            val userID = getUserId()
-            if ( userID != null ) {
-                val trashedExpenses = expensesDao.getAllTrashedExpenses(userID)
-                return trashedExpenses.map { it.toExpense() }
-            } else {
+            val userID = prefsRepo.getUserId().firstOrNull()
+
+            if ( userID == null ) {
+                Log.e(TAG, "User is null")
                 return emptyList()
             }
+
+            val trashedExpenses = expensesDao.getAllTrashedExpenses(userID)
+            return trashedExpenses.map { it.toExpense() }
+
         } catch (ex: Exception ){
             return emptyList()
         }
@@ -144,7 +173,7 @@ class ExpensesRepositoryImpl @Inject constructor(
 
     override suspend fun getAllUnsyncedExpenses(): List<Expense> {
         try {
-            val userID = getUserId()
+            val userID = prefsRepo.getUserId().firstOrNull()
             if ( userID != null ) {
                 val unsyncedExpenses = expensesDao.getAllUnsyncedExpenses(userID)
                 return unsyncedExpenses.map { it.toExpense() }
@@ -154,11 +183,5 @@ class ExpensesRepositoryImpl @Inject constructor(
         } catch (ex: Exception ){
             return emptyList()
         }
-    }
-
-    private suspend fun getUserId() : String? {
-        val userIdInPrefs = prefsRepo.getUserId().firstOrNull()
-        val userAuthenticated =  userIdInPrefs != null && userIdInPrefs == authenticatedUserId
-        return  if ( userAuthenticated ) userIdInPrefs else null
     }
 }

@@ -1,14 +1,11 @@
 package com.engineerfred.easyrent.data.repository
 
 import android.content.ContentResolver
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresExtension
 import androidx.core.net.toUri
 import com.engineerfred.easyrent.constants.Constants.EXPENSES
 import com.engineerfred.easyrent.constants.Constants.PAYMENTS
 import com.engineerfred.easyrent.constants.Constants.ROOMS
-import com.engineerfred.easyrent.constants.Constants.SUPABASE_URL
 import com.engineerfred.easyrent.constants.Constants.TENANTS
 import com.engineerfred.easyrent.constants.Constants.USERS
 import com.engineerfred.easyrent.data.local.db.CacheDatabase
@@ -24,11 +21,10 @@ import com.engineerfred.easyrent.data.remote.dto.RoomDto
 import com.engineerfred.easyrent.data.remote.dto.TenantDto
 import com.engineerfred.easyrent.data.remote.dto.UserDto
 import com.engineerfred.easyrent.data.resource.Resource
-import com.engineerfred.easyrent.data.resource.authSafeCall
-import com.engineerfred.easyrent.data.resource.safeCall
 import com.engineerfred.easyrent.domain.modals.User
 import com.engineerfred.easyrent.domain.repository.AuthRepository
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
+import com.engineerfred.easyrent.util.buildImageUrl
 import com.engineerfred.easyrent.util.compressAndConvertToByteArray
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -36,8 +32,8 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
 import io.ktor.http.ContentType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -54,149 +50,163 @@ class AuthRepositoryImpl @Inject constructor(
         private const val TAG = "AuthRepositoryImpl"
     }
 
-    override suspend fun signUpUser(user: User, password: String, contentResolver: ContentResolver): Resource<Unit> = authSafeCall(logTag = TAG, auth) {
-        Log.i(TAG, "Signing up user with email....")
-        auth.signUpWith(Email) {
-            this.email = user.email
-            this.password = password
-        }
+    override suspend fun signUpUser(
+        user: User,
+        password: String,
+        contentResolver: ContentResolver
+    ): Resource<Unit> {
+        try {
+            Log.i(TAG, "Signing up user with email....")
 
-        val loggedInUser = auth.currentUserOrNull()
-
-        if( loggedInUser != null ) {
-            Log.i(TAG, "Sign up successful! Saving userID in preferences....")
-            try {
-                prefs.saveUserId(loggedInUser.id)
-                Log.i(TAG, "User id saved successfully! Adding user in database...")
-                if( user.imageUrl.isNullOrEmpty() ) {
-                    val result = supabaseClient.from(USERS).insert(
-                        user.copy(id = loggedInUser.id).toUserDto()
-                    ) {
-                        select()
-                    }.decodeSingleOrNull<UserDto>()
-                    Log.i(TAG, "User saved successfully in remote database! Caching user locally...")
-
-                    result?.let {
-                        cache.userInfoDao().insertUserInfo(result.toUserInfoEntity())
-                    }
-                    Log.i(TAG, "User cached successfully")
-                    Resource.Success(Unit)
-                } else {
-                    val uploadedImageUrl = uploadImage(contentResolver, loggedInUser.id, user)
-                    if( !uploadedImageUrl.isNullOrEmpty() ) {
-                        Log.i(TAG, "Saving user in database...")
-                        val result = supabaseClient.from(USERS).insert(
-                            user.copy(id = loggedInUser.id, imageUrl = uploadedImageUrl).toUserDto()
-                        ) {
-                            select()
-                        }.decodeSingleOrNull<UserDto>()
-                        Log.i(TAG, "User saved successfully in remote database! Caching user locally...")
-
-                        result?.let {
-                            cache.userInfoDao().insertUserInfo(result.toUserInfoEntity())
-                        }
-                        Log.i(TAG, "User saved successfully")
-                        Resource.Success(Unit)
-                    } else {
-                        Resource.Error("Something went wrong!...Uploaded imageUrl is null")
-                    }
-                }
-            } catch (ex: Exception) {
-                Resource.Error("Signup was success but adding user to database failed due to ${ex.message}")
+            auth.signUpWith(Email) {
+                this.email = user.email
+                this.password = password
             }
 
-        } else {
-            Log.i(TAG, "Signup just failed! :( User not logged in!")
-            Resource.Error("Signup failed! User not logged in!")
+            val loggedInUser = auth.currentUserOrNull()
+            if (loggedInUser == null) {
+                Log.e(TAG, "Signup failed! User not logged in!")
+                return Resource.Error("Signup failed! User not logged in!")
+            }
+
+            Log.i(TAG, "Sign up successful! Saving userID in preferences....")
+            prefs.saveUserId(loggedInUser.id)
+
+            // Upload image if exists
+            val uploadedImageUrl = if (!user.imageUrl.isNullOrEmpty()) {
+                uploadImage(contentResolver, loggedInUser.id, user)
+            } else null
+
+            if (uploadedImageUrl.isNullOrEmpty()) {
+                Log.e(TAG, "Something went wrong!... Uploaded imageUrl is null")
+                prefs.clearUserId()
+                return Resource.Error("Failed to upload image!")
+            }
+
+            // Insert user into Supabase
+            val result = supabaseClient.from(USERS).insert(
+                user.copy(id = loggedInUser.id, imageUrl = uploadedImageUrl)
+                    .toUserDto()
+            ) {
+                select()
+            }.decodeSingleOrNull<UserDto>()
+
+            if (result == null) {
+                Log.e(TAG, "User insertion failed in the remote database!")
+                prefs.clearUserId()
+                return Resource.Error("Failed to save user in database")
+            }
+
+            Log.i(TAG, "User saved successfully in remote database! Caching user locally...")
+
+            cache.userInfoDao().insertUserInfo(result.toUserInfoEntity())
+
+            Log.i(TAG, "User cached successfully")
+            return Resource.Success(Unit)
+
+        } catch (ex: Exception) {
+            Log.e(TAG, "Error signing up user: ${ex.message}")
+            prefs.clearUserId()
+            return Resource.Error("Error signing up user: ${ex.message}")
         }
     }
 
-    override suspend fun signInUser(email: String, password: String): Resource<Unit> = authSafeCall( logTag = TAG, auth ) {
-        Log.i(TAG, "Signing in user...!")
-        auth.signInWith(Email){
-            this.email = email
-            this.password = password
-        }
 
-        //TODO("When we get an exception a user should be signed out")
+    override suspend fun signInUser(email: String, password: String): Resource<Unit> {
+        try {
+            Log.i(TAG, "Signing in user...")
 
-        val loggedInUser = auth.currentUserOrNull()
+            auth.signInWith(Email){
+                this.email = email
+                this.password = password
+            }
 
-        if ( loggedInUser != null ) {
-            Log.v("BIG", "ID if the user who just got signed it: ${loggedInUser.id}")
+            val loggedInUser = auth.currentUserOrNull()
+
+            if (loggedInUser == null) {
+                Log.e(TAG, "Login failed! User not logged in!")
+                return Resource.Error("Login failed! User not logged in!")
+            }
+
             Log.i(TAG, "Logged in successfully! Saving userID in preferences....")
             prefs.saveUserId(loggedInUser.id)
+
+
             Log.i(TAG, "User id saved successfully! Resetting cache...")
-            //cache.clearCache()
-            resetDb()
-            Log.i(TAG, "Fetching user info from remote database...!")
-            val result1 = supabaseClient.from(USERS).select{
+            resetDb() //resetting db. Deleting all previous cached data
+
+            Log.i(TAG, "Fetching user info from remote database...")
+            val currentUser = supabaseClient.from(USERS).select{
                 filter { eq("id", loggedInUser.id) }
             }.decodeSingleOrNull<UserDto>()
 
-            val result2 = supabaseClient.from(ROOMS).select{
+            if (currentUser == null) {
+                prefs.clearUserId()
+                return Resource.Error("User not found!")
+            }
+
+            val userRooms = supabaseClient.from(ROOMS).select{
                 filter { eq("user_id", loggedInUser.id) }
             }.decodeList<RoomDto>()
 
-            val result3 = supabaseClient.from(TENANTS).select{
+            val userTenants = supabaseClient.from(TENANTS).select{
                 filter { eq("user_id", loggedInUser.id) }
             }.decodeList<TenantDto>()
 
-            val result4 = supabaseClient.from(PAYMENTS).select{
+            val userPayments = supabaseClient.from(PAYMENTS).select{
                 filter { eq("user_id", loggedInUser.id) }
             }.decodeList<PaymentDto>()
 
-            val result5 = supabaseClient.from(EXPENSES).select{
+            val userExpenses = supabaseClient.from(EXPENSES).select{
                 filter { eq("user_id", loggedInUser.id) }
             }.decodeList<ExpenseDto>()
 
-            if (result1 != null) {
-                Log.i(TAG, "User info fetched from remote database! Caching user info...")
-                cache.updateCache(
-                    result1.toUserInfoEntity(),
-                    result2.map { it.toRoomEntity() },
-                    result3.map { it.toTenantEntity() },
-                    result4.map { it.toPaymentEntity() },
-                    result5.map { it.toExpenseEntity() }
-                )
-                Log.i(TAG, "User info Cached successfully!")
-            } else {
-                auth.signOut()
-                Resource.Error("User not found!")
-            }
+            Log.i(TAG, "User info fetched from remote database! Caching user info...")
+            cache.updateCache(
+                currentUser.toUserInfoEntity(),
+                userRooms.map { it.toRoomEntity() },
+                userTenants.map { it.toTenantEntity() },
+                userPayments.map { it.toPaymentEntity() },
+                userExpenses.map { it.toExpenseEntity() }
+            )
+            Log.i(TAG, "User info Cached successfully!")
 
-            Log.i(TAG, "Successfully signed in user!")
-            Resource.Success(Unit)
-        } else {
-            Resource.Error("Something went wrong!")
+            Log.i(TAG, "Sign in successful!")
+            return Resource.Success(Unit)
+        }catch (ex: Exception) {
+            Log.e(TAG, "Error signing in user: ${ex.message}")
+            prefs.clearUserId()
+            return Resource.Error("Error signing in user: ${ex.message}")
         }
     }
 
-    @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
-    override suspend fun signOut(): Resource<Unit> = safeCall(currentUserId = auth.currentUserOrNull()?.id, logTag = TAG) {
-        Log.i(TAG, "Logging out user...")
+    override suspend fun signOut(): Resource<Unit>  {
+        try {
+            Log.i(TAG, "Logging out user...")
 
-        auth.signOut()
-        Log.i(TAG, "Successfully logged out user! Clearing cache...")
+            auth.signOut()
+            Log.i(TAG, "Successfully logged out user! Clearing cache...")
 
-        resetDb()
-        Log.i(TAG, "Successfully cleared cache! Clearing preferences...")
+            prefs.clearUserId()
+            Log.i(TAG, "Successfully cleared preferences. Clearing cache...")
 
-        prefs.clearUserId()
-        Log.i(TAG, "Sign out SUCCESSFUL")
+            resetDb()
+            Log.i(TAG, "Sign out SUCCESSFUL")
 
-        Resource.Success(Unit)
-    }
-
-    private fun resetDb() {
-        cache.runInTransaction {
-            runBlocking {
-                cache.clearAllTables()
-            }
+            return Resource.Success(Unit)
+        }catch (ex: Exception) {
+            Log.e(TAG, "Error signing out user: ${ex.message}")
+            return Resource.Error("Error signing out user: ${ex.message}")
         }
     }
 
-    private suspend fun uploadImage(contentResolver: ContentResolver, loggedInUserId: String, user: User) : String? {
+    private suspend fun resetDb() {
+        withContext(Dispatchers.IO) {
+            cache.clearAllTables()
+        }
+    }
+
+    private suspend fun uploadImage(contentResolver: ContentResolver, loggedInUserId: String, user: User) : String {
         Log.i(TAG, "Uploading user image...")
         return withContext(NonCancellable) {
             try {
@@ -213,16 +223,13 @@ class AuthRepositoryImpl @Inject constructor(
                     upsert = true
                     contentType = ContentType.Image.PNG
                 }
+
                 Log.i(TAG, "Upload successfully! Image path: ${buildImageUrl(uploadedImgUrl.path)}")
                 buildImageUrl(uploadedImgUrl.path)
             }catch (ex: Exception) {
                 Log.e(TAG, "Upload failed! Error: $ex")
-                null
+                throw ex
             }
         }
     }
-
-    private fun buildImageUrl(imageFileName: String) =
-        "$SUPABASE_URL/storage/v1/object/users-images/${imageFileName}"
-
 }
