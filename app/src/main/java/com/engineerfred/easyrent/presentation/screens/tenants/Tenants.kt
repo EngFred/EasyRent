@@ -1,6 +1,7 @@
 package com.engineerfred.easyrent.presentation.screens.tenants
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,12 +22,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -35,11 +40,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.engineerfred.easyrent.presentation.screens.tenants.components.TenantItem
+import com.engineerfred.easyrent.presentation.theme.MyError
+import com.engineerfred.easyrent.presentation.theme.MySecondary
+import com.engineerfred.easyrent.presentation.theme.MySurface
+import com.engineerfred.easyrent.presentation.theme.MyTertiary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Tenants(
-    modifier: Modifier = Modifier,
     onAddTenant: () -> Unit,
     onBackClicked: () -> Unit,
     tenantsViewModel: TenantsViewModel = hiltViewModel()
@@ -67,6 +75,12 @@ fun Tenants(
                         )
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MySecondary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
+                ),
                 actions = {
                     IconButton(
                         onClick = {
@@ -89,22 +103,51 @@ fun Tenants(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(MySecondary, MyTertiary)))
                 .padding(innerPadding),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when {
                 uiState.isLoading -> {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = Color.White
+                    )
                 }
 
                 !uiState.isLoading && !uiState.fetchError.isNullOrEmpty() -> {
-                    Text(text = uiState.fetchError, style = TextStyle(color = Color.Red, fontWeight = FontWeight.W200, textAlign = TextAlign.Center,fontSize = 18.sp,))
+                    Text(
+                        text = uiState.fetchError,
+                        style = TextStyle(
+                            fontWeight = FontWeight.W200,
+                            textAlign = TextAlign.Center,
+                            fontSize = 18.sp,
+                            color = MyError,
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = .5f),
+                                blurRadius = 6f,
+                                offset = Offset(2f, 2f)
+                            )
+                        )
+                    )
                 }
 
                 else -> {
                     if (uiState.tenants.isEmpty()) {
-                        Text(text = "No tenants found!", style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.W200, textAlign = TextAlign.Center))
+                        Text(
+                            text = "No tenants found!",
+                            style = TextStyle(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.W200,
+                                textAlign = TextAlign.Center,
+                                color = MySurface,
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = .5f),
+                                    blurRadius = 6f,
+                                    offset = Offset(2f, 2f)
+                                )
+                            )
+                        )
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),

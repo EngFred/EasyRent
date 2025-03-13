@@ -1,6 +1,7 @@
 package com.engineerfred.easyrent.presentation.screens.rooms
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,7 +34,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +47,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.engineerfred.easyrent.presentation.screens.rooms.components.DrawerContent
 import com.engineerfred.easyrent.presentation.screens.rooms.components.RoomItem
+import com.engineerfred.easyrent.presentation.theme.MyError
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
+import com.engineerfred.easyrent.presentation.theme.MySecondary
+import com.engineerfred.easyrent.presentation.theme.MySurface
+import com.engineerfred.easyrent.presentation.theme.MyTertiary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -107,9 +117,17 @@ fun RoomsScreen(
         },
     ) {
         Scaffold(
-            modifier = Modifier,
             topBar = {
-                TopAppBar(title = { Text(text = "Rooms") },
+                TopAppBar(
+                    title = {
+                        Text(text = "Rooms")
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MySecondary,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    ),
                     navigationIcon = {
                     IconButton(
                         onClick = {
@@ -123,32 +141,63 @@ fun RoomsScreen(
 
             floatingActionButton = {
                 FloatingActionButton(
+                    modifier = Modifier.padding(bottom = 36.dp, end = 20.dp),
                     onClick = onAddRoom,
-                    shape = CircleShape
+                    shape = CircleShape,
+                    containerColor = MyPrimary
                 ) {
-                    Icon(imageVector = Icons.Rounded.Add, contentDescription = null)
+                    Icon(imageVector = Icons.Rounded.Add, contentDescription = null, tint = Color.White)
                 }
             }
         ) { innerPadding ->
             Column(
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .background(Brush.verticalGradient(listOf(MySecondary, MyTertiary))),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
                 when {
                     uiState.loading -> {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            color = Color.White
+                        )
                     }
                     uiState.error != null && !uiState.loading -> {
-                        Text(text = uiState.error, style = TextStyle(color = Color.Red, fontWeight = FontWeight.W200, textAlign = TextAlign.Center),fontSize = 18.sp)
+                        Text(
+                            text = uiState.error,
+                            style = TextStyle(
+                                color = MyError,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                fontSize = 18.sp,
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    blurRadius = 6f,
+                                    offset = Offset(2f, 2f)
+                                )
+                            )
+                        )
                     }
                     else -> {
                         when {
                             uiState.rooms.isEmpty() -> {
-                                Text(text = "No rooms yet!", style = TextStyle(color = Color.Gray, fontWeight = FontWeight.W200, textAlign = TextAlign.Center, fontSize = 20.sp))
+                                Text(
+                                    text = "No rooms yet!",
+                                    style = TextStyle(
+                                        color = MySurface,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 20.sp,
+                                        shadow = Shadow(
+                                            color = Color.Black.copy(alpha = 0.5f),
+                                            blurRadius = 6f,
+                                            offset = Offset(2f, 2f)
+                                        )
+                                    )
+                                )
                             }
                             else -> {
                                 Box(Modifier.fillMaxSize()) {
@@ -168,7 +217,6 @@ fun RoomsScreen(
                                                     roomsViewModel.onEvent(RoomsEvents.TenantDeleted(tenant, roomId))
                                                 },
                                                 isDeletingTenant = uiState.isDeletingTenant,
-                                                deleteSuccessful = uiState.deleteTenantSuccessful,
                                                 onDeleteRoom = { room ->
                                                     if ( uiState.deletingRoom.not() ) {
                                                         roomsViewModel.onEvent(RoomsEvents.RoomDeleted(room))
@@ -185,10 +233,17 @@ fun RoomsScreen(
                                         .align(Alignment.BottomCenter), contentAlignment = Alignment.Center){
                                         Text(
                                             "Long press on the room to delete!",
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Center,
-                                            color = Color.Magenta,
+                                            color = Color.Cyan,
+                                            style = TextStyle(
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.Center,
+                                                fontSize = 15.sp,
+                                                shadow = Shadow(
+                                                    color = Color.Black,
+                                                    blurRadius = 6f,
+                                                    offset = Offset(2f, 2f)
+                                                )
+                                            )
                                         )
                                     }
                                 }

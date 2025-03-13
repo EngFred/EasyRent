@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,14 +29,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.engineerfred.easyrent.domain.modals.Payment
 import com.engineerfred.easyrent.domain.modals.PaymentMethod
+import com.engineerfred.easyrent.presentation.common.CustomAlertDialog
+import com.engineerfred.easyrent.presentation.theme.MyCardBg
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
+import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.util.formatCurrency
 import com.engineerfred.easyrent.util.toFormattedDate
 
@@ -78,6 +80,7 @@ fun PaymentItem(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(MyCardBg)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -85,19 +88,26 @@ fun PaymentItem(
                     text = "Room ${payment.roomNumber} - ${payment.tenantName.replaceFirstChar { it.uppercase() }}",
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MySurface
                 )
 
                 Text(
                     text = "Paid: UGX ${formatCurrency(payment.amount)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        color = MyPrimary,
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = .5f),
+                            blurRadius = 6f,
+                            offset = Offset(2f, 2f)
+                        )
+                    )
                 )
 
                 Text(
                     text = "Balance: UGX ${formatCurrency(payment.newBalance)}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MySurface
                 )
 
                 Row(
@@ -108,7 +118,7 @@ fun PaymentItem(
                     Text(
                         text = payment.paymentDate.toFormattedDate(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MySurface
                     )
 
                     Spacer(Modifier.size(6.dp))
@@ -123,54 +133,29 @@ fun PaymentItem(
                         text = pm,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary,
+                        color = MySurface,
                     )
                 }
             }
         }
         if (deletingPayment && deletedPaymentId == payment.id) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(color = Color.White)
             }
         }
 
         if (showConfirmDeletePaymentDialog) {
-            AlertDialog(
-                onDismissRequest = { showConfirmDeletePaymentDialog = false },
-                title = { Text(
-                    text = "Delete Payment",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                ) },
-                text = {
-                    Text(
-                        buildAnnotatedString {
-                            append("Do you want to delete this payment by ")
-                            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                            append("${payment.tenantName}? ")
-                            pop()
-                            append("This action cannot be undone.")
-                        },
-                        fontSize = 18.sp
-                    )
+            CustomAlertDialog(
+                title = "Delete Payment",
+                text1 = "Do you want to delete this payment by ",
+                boldText1 = "${payment.tenantName}? ",
+                text2 = "This action cannot be undone.",
+                confirmButtonText = "Yes, Delete",
+                onConfirm = {
+                    showConfirmDeletePaymentDialog = false
+                    onConfirmDeletePayment(payment)
                 },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            showConfirmDeletePaymentDialog = false
-                            onConfirmDeletePayment(payment)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Delete Payment", color = Color.White)
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { showConfirmDeletePaymentDialog = false }, shape = RoundedCornerShape(12.dp)) {
-                        Text("Cancel")
-                    }
-                }
+                onDismiss = { showConfirmDeletePaymentDialog = false }
             )
         }
     }

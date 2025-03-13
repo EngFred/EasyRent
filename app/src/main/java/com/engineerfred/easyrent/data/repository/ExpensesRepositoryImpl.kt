@@ -107,7 +107,7 @@ class ExpensesRepositoryImpl @Inject constructor(
     }
 
     override fun getAllExpenses(): Flow<Resource<List<Expense>>> = flow {
-        val userID = getUserId()
+        val userID = prefsRepo.getUserId().firstOrNull()
         if ( userID != null ) {
             val expensesFlow = expensesDao.getAllExpenses( userID ).map { cachedExpenses ->
                 if ( cachedExpenses.isEmpty() ) {

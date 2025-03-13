@@ -10,13 +10,13 @@ data class ExpensesUiState(
     val success: Boolean = false,
     val expenses: List<Expense> = emptyList(),
     val title: String = "",
+    val titleErr: String? = null,
     val notes: String? = null,
     val amount: String = "",
+    val amountErr: String? = null,
     val category: String? = null,
     val totalExpenses: String = "",
     val isInserting: Boolean = false,
     val insertionErr: String? = null,
     val insertSuccess: Boolean = false
-)  {
-    val isValidForm = title.isNotEmpty() && amount.isNotEmpty() && amount.toFloatOrNull() != null && category.isNullOrEmpty().not()
-}
+)

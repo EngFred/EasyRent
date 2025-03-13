@@ -36,7 +36,7 @@ class ExpensesViewModel @Inject constructor(
             )
         }
         when(event) {
-            is ExpensesUiEvents.DeleteButtonClicked -> {
+            is ExpensesUiEvents.DeletedExpense -> {
                 _uiState.update {
                     it.copy(isDeleting = true)
                 }
@@ -64,13 +64,19 @@ class ExpensesViewModel @Inject constructor(
 
             is ExpensesUiEvents.TitleChanged -> {
                 _uiState.update {
-                    it.copy(title = event.title)
+                    it.copy(
+                        title = event.title,
+                        titleErr = if ( event.title.isEmpty() ) "Title is required" else if ( event.title.length < 3 ) "Title must be at least 3 characters" else null
+                    )
                 }
             }
 
             is ExpensesUiEvents.AmountChanged -> {
                 _uiState.update {
-                    it.copy(amount = event.amount)
+                    it.copy(
+                        amount = event.amount,
+                        amountErr = if ( event.amount.isEmpty() ) "Amount is required" else if ( event.amount.toFloatOrNull() == null ) "Invalid amount" else null
+                    )
                 }
             }
 

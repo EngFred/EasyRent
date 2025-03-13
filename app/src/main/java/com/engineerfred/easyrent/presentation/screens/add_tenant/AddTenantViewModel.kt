@@ -19,7 +19,6 @@ import javax.inject.Inject
 class AddTenantViewModel @Inject constructor(
     private val addTenantUseCase: AddTenantUseCase,
     private val getAvailableRoomsUseCase: GetAvailableRoomsUseCase
-    //private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTenantUiState())
@@ -37,14 +36,14 @@ class AddTenantViewModel @Inject constructor(
             is AddTenantUiEvents.EmergencyContactChanged -> {
                 _uiState.update {
                     it.copy(
-                        emergencyContact = event.emergencyContact
+                        emergencyContact = event.emergencyContact.trim()
                     )
                 }
             }
             is AddTenantUiEvents.ChangedIdDetails -> {
                 _uiState.update {
                     it.copy(
-                        idDetails = event.idDetails
+                        idDetails = event.idDetails.trim()
                     )
                 }
             }
@@ -70,23 +69,31 @@ class AddTenantViewModel @Inject constructor(
                 saveTenant(tenant, event.contentResolver)
             }
             is AddTenantUiEvents.ContactChanged -> {
+                verifyPhoneNumber(event.contact)
                 _uiState.update {
                     it.copy(
-                        contact = event.contact
+                        contact = event.contact.trim()
                     )
                 }
             }
             is AddTenantUiEvents.NameChanged -> {
                 _uiState.update {
                     it.copy(
-                        name = event.name
+                        name = event.name.trim(),
+                        nameErr = if (event.name.isEmpty()) {
+                            "Name is required"
+                        } else {
+                            if (event.name.length >= 2) null
+                            else "Name must have more than 2 characters"
+                        }
+
                     )
                 }
             }
             is AddTenantUiEvents.NotesChanged -> {
                 _uiState.update {
                     it.copy(
-                        notes = event.notes
+                        notes = event.notes.trim()
                     )
                 }
             }
@@ -101,7 +108,8 @@ class AddTenantViewModel @Inject constructor(
             is AddTenantUiEvents.EmailChanged -> {
                 _uiState.update {
                     it.copy(
-                        email = event.email
+                        email = event.email.trim(),
+                        emailErr = if(event.email.isEmpty()) "Email required" else if(validateEmail(event.email)) null else "Invalid email"
                     )
                 }
             }
@@ -117,7 +125,7 @@ class AddTenantViewModel @Inject constructor(
             is AddTenantUiEvents.SelectedRoomNumber -> {
                 _uiState.update {
                     it.copy(
-                        roomNumber = event.roomNumber
+                        roomNumber = event.roomNumber.trim()
                     )
                 }
             }
@@ -194,6 +202,24 @@ class AddTenantViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    private fun validateEmail(email: String) : Boolean{
+        val emailRegex = Regex("[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+")
+        return emailRegex.matches(email)
+    }
+
+    private fun verifyPhoneNumber(telNo: String) {
+        val phonePattern = "^\\+?[1-9][0-9]{7,14}$".toRegex()
+        _uiState.update {
+            it.copy(
+                contactErr = when {
+                    telNo.isBlank() -> "Contact is required"
+                    !telNo.matches(phonePattern) -> "Invalid contact format"
+                    else -> null
+                }
+            )
         }
     }
 }

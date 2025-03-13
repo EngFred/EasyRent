@@ -1,5 +1,6 @@
 package com.engineerfred.easyrent.presentation.screens.tenants.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,17 +28,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.engineerfred.easyrent.R
 import com.engineerfred.easyrent.domain.modals.Tenant
-import com.engineerfred.easyrent.presentation.common.ConfirmTenantDeleteDialog
+import com.engineerfred.easyrent.presentation.common.CustomAlertDialog
+import com.engineerfred.easyrent.presentation.theme.MyCardBg
+import com.engineerfred.easyrent.presentation.theme.MyError
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
+import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.util.formatCurrency
 import com.engineerfred.easyrent.util.toFormattedDate
 
@@ -49,8 +58,7 @@ fun TenantItem(
     deletingTenant: () -> Boolean,
     deletedTenantId: String
 ) {
-    val context = LocalContext.current
-    val balanceColor = if (tenant.balance >= 0) Color(0xFF4CAF50) else Color(0xFFF44336) // Green for positive, Red for negative
+    val balanceColor = if (tenant.balance >= 0) Color(0xFF4CAF50) else Color(0xFFF44336)
     var showDialog by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
@@ -59,27 +67,43 @@ fun TenantItem(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        Box(
+            contentAlignment = Alignment.Center
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(MyCardBg)
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     contentAlignment = Alignment.BottomEnd
                 ) {
-                    GlideImage(
-                        model = tenant.profilePic,
-                        contentDescription = "${tenant.name}'s profile picture",
-                        modifier = Modifier
-                            .size(70.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape) // Added border
-                            .background(Color.DarkGray),
-                        contentScale = ContentScale.Crop
-                    )
-                    SyncDot(isSynced = tenant.isSynced) // Placed inside profile picture
+                    if( tenant.profilePic != null ) {
+                        GlideImage(
+                            model = tenant.profilePic,
+                            contentDescription = "${tenant.name}'s profile picture",
+                            modifier = Modifier
+                                .size(70.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, MyPrimary, CircleShape) // Added border
+                                .background(Color.DarkGray),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(R.drawable.default_profile_image1),
+                            contentDescription = "${tenant.name}'s profile picture",
+                            modifier = Modifier
+                                .size(70.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, MyPrimary, CircleShape)
+                                .background(Color.DarkGray),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    SyncDot(isSynced = tenant.isSynced)
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -87,19 +111,34 @@ fun TenantItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = tenant.name.replaceFirstChar { it.uppercase() },
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Room ${tenant.roomNumber}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MySurface
+                        )
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "Bal: UGX.${formatCurrency(tenant.balance)}",
-                        fontWeight = FontWeight.Medium,
-                        color = balanceColor,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = balanceColor,
+                            shadow = Shadow(
+                                color = Color.Black,
+                                blurRadius = 6f,
+                                offset = Offset(2f, 2f)
+                            )
+                        )
                     )
                 }
 
@@ -112,21 +151,32 @@ fun TenantItem(
                 ) {
                     Text(
                         "Delete",
-                        color = MaterialTheme.colorScheme.error,
                         maxLines = 1,
-                        fontSize = 14.sp,
                         modifier = Modifier.clickable(
                             enabled = deletingTenant().not()
                         ) {
                             showDialog = !showDialog
                         },
-                        textAlign = TextAlign.End
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.End,
+                            fontWeight = FontWeight.Medium,
+                            color = MyError,
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = .5f),
+                                blurRadius = 6f,
+                                offset = Offset(2f, 2f)
+                            )
+                        )
                     )
 
                     Text(
                         text = tenant.moveInDate.toFormattedDate(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MySurface
+                        )
                     )
                 }
             }
@@ -136,14 +186,22 @@ fun TenantItem(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = Color.White
+                    )
                 }
             }
         }
 
         if (showDialog) {
-            ConfirmTenantDeleteDialog(
-                tenant = tenant,
+            CustomAlertDialog(
+                title = "Remove Tenant",
+                text1 = "Are you sure you want to remove ",
+                boldText1 = tenant.name,
+                text2 = " from Room ",
+                boldText2 = tenant.roomNumber.toString(),
+                text3 = "? This action cannot be undone.",
+                confirmButtonText = "Yes, Remove",
                 onConfirm = {
                     onDelete(tenant)
                     showDialog = false
@@ -151,7 +209,6 @@ fun TenantItem(
                 onDismiss = {
                     showDialog = false
                 },
-                roomNumber = tenant.roomNumber.toString()
             )
         }
 
@@ -163,13 +220,13 @@ fun SyncDot(
     modifier: Modifier = Modifier,
     isSynced: Boolean
 ) {
-    val color = if (isSynced) Color(0xFF4CAF50) else Color(0xFFF44336) // Green for synced, Red for not synced
+    val color = if (isSynced) Color(0xFF4CAF50) else Color(0xFFF44336)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(16.dp)
             .clip(CircleShape)
             .background(color)
-            .border(1.dp, Color.White, CircleShape) // Adds a white border for better visibility
+            .border(1.dp, Color.White, CircleShape)
     )
 }
 

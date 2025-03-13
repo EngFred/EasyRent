@@ -4,8 +4,6 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,23 +13,28 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,29 +48,35 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.engineerfred.easyrent.R
+import com.engineerfred.easyrent.presentation.common.CustomTextField
+import com.engineerfred.easyrent.presentation.theme.MyCardBg
+import com.engineerfred.easyrent.presentation.theme.MyError
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
+import com.engineerfred.easyrent.presentation.theme.MySecondary
+import com.engineerfred.easyrent.presentation.theme.MySurface
+import com.engineerfred.easyrent.presentation.theme.MyTertiary
 
 @Composable
 fun SignUpScreen(
-    modifier: Modifier = Modifier,
     onNavigateToSignIn: () -> Unit,
     onSignUpSuccess: () -> Unit,
     signUpViewModel: SignUpViewModel = hiltViewModel()
 ) {
-
     val context = LocalContext.current
-
     val uiState = signUpViewModel.uiState.collectAsState().value
 
     LaunchedEffect(key1 = uiState.signUpSuccessful) {
@@ -82,198 +91,145 @@ fun SignUpScreen(
         }
     }
 
-    // Image Picker Launcher
     val imagePickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let {
-                signUpViewModel.onEvent(SignUpEvents.ImageUrlChangedChanged(it.toString()))
-            }
+            uri?.let { signUpViewModel.onEvent(SignUpEvents.ImageUrlChangedChanged(it.toString())) }
         }
 
-    Scaffold { innerPadding ->
-        Column(
+    Scaffold {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(MySecondary, MyTertiary)))
+                .padding(it)
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Profile Image
-                Box(
-                    modifier = Modifier.size(120.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (uiState.imageUrl.isNullOrEmpty()) {
-                        Image(
-                            painter = painterResource(id = R.drawable.default_profile_image1),
-                            contentDescription = "Profile Picture",
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, Color.Gray, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        AsyncImage(
-                            model = uiState.imageUrl,
-                            contentDescription = "Selected Profile Picture",
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, Color.Gray, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
+                Text(
+                    text = "Create an Account",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold, color = Color.White)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
 
-                    IconButton(
-                        onClick = { imagePickerLauncher.launch("image/*") },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .background(Color.White, CircleShape)
-                            .border(1.dp, Color.Gray, CircleShape)
-                            .padding(4.dp)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MyCardBg),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = "Change Image")
-                    }
-                }
-                Spacer(modifier = Modifier.size(15.dp))
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = uiState.hostelName ?: "",
-                        onValueChange = { signUpViewModel.onEvent(SignUpEvents.HostelNameChanged(it)) },
-                        label = { Text("Hostel name (optional)") },
-                        isError = !uiState.ck,
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.None)
-                    )
-                    AnimatedVisibility(visible = uiState.ck.not()) {
-                        Text(uiState.hostelNameErr ?: "", color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
+                        // Profile Image
+                        Box(contentAlignment = Alignment.BottomEnd) {
+                            AsyncImage(
+                                model = uiState.imageUrl ?: R.drawable.default_profile_image1,
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(CircleShape)
+                                    .border(3.dp, Color.Gray, CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                            FloatingActionButton(
+                                onClick = { imagePickerLauncher.launch("image/*") },
+                                modifier = Modifier.size(32.dp),
+                                containerColor = MyPrimary,
+                                contentColor = Color.White
+                            ) {
+                                Icon(Icons.Default.CameraAlt, contentDescription = "Change Image", modifier = Modifier.size(16.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
 
-            // First Name
-            OutlinedTextField(
-                value = uiState.firstName,
-                onValueChange = { signUpViewModel.onEvent(SignUpEvents.FirstNameChanged(it)) },
-                label = { Text("First Name") },
-                singleLine = true,
-                isError = uiState.firstNameErr != null,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.None)
-            )
-            AnimatedVisibility(uiState.firstNameErr != null) {
-                Text(uiState.firstNameErr ?: "", color = MaterialTheme.colorScheme.error)
-            }
-
-            // Last Name
-            OutlinedTextField(
-                value = uiState.lastName,
-                onValueChange = { signUpViewModel.onEvent(SignUpEvents.LastNameChanged(it)) },
-                label = { Text("Last Name") },
-                singleLine = true,
-                isError = uiState.lastNameErr != null,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.None)
-            )
-            AnimatedVisibility(uiState.lastNameErr != null) {
-                Text(uiState.lastNameErr ?: "", color = MaterialTheme.colorScheme.error)
-            }
-
-            // Email
-            OutlinedTextField(
-                value = uiState.email,
-                onValueChange = { signUpViewModel.onEvent(SignUpEvents.EmailChanged(it)) },
-                label = { Text("Email") },
-                singleLine = true,
-                isError = uiState.emailErr != null,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Email
-                )
-            )
-            AnimatedVisibility(uiState.emailErr != null) {
-                Text(uiState.emailErr ?: "", color = MaterialTheme.colorScheme.error)
-            }
-
-            // Phone Number
-            OutlinedTextField(
-                value = uiState.telNo,
-                onValueChange = { signUpViewModel.onEvent(SignUpEvents.TelNoChanged(it)) },
-                label = { Text("Phone Number") },
-                isError = uiState.telNoErr != null,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Phone
-                )
-            )
-            AnimatedVisibility(uiState.telNoErr != null) {
-                Text(uiState.telNoErr ?: "", color = MaterialTheme.colorScheme.error)
-            }
-
-            // Password
-            var passwordVisible by rememberSaveable { mutableStateOf(false) }
-            OutlinedTextField(
-                value = uiState.password,
-                onValueChange = { signUpViewModel.onEvent(SignUpEvents.PasswordChanged(it)) },
-                label = { Text("Password") },
-                isError = uiState.passwordErr != null,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Password
-                ),
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle Password Visibility"
+                        // Input Fields
+                        CustomTextField(
+                            value = uiState.firstName,
+                            onValueChange = { signUpViewModel.onEvent(SignUpEvents.FirstNameChanged(it)) },
+                            label = "First Name",
+                            keyboardType = KeyboardType.Text,
+                            errorMessage = uiState.firstNameErr
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CustomTextField(
+                            value = uiState.lastName,
+                            keyboardType = KeyboardType.Text,
+                            onValueChange = { signUpViewModel.onEvent(SignUpEvents.LastNameChanged(it)) },
+                            label = "Last Name",
+                            errorMessage = uiState.lastNameErr
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CustomTextField(
+                            value = uiState.email,
+                            keyboardType = KeyboardType.Email,
+                            onValueChange = { signUpViewModel.onEvent(SignUpEvents.EmailChanged(it)) },
+                            label = "Email",
+                            errorMessage = uiState.emailErr
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CustomTextField(
+                            value = uiState.telNo,
+                            keyboardType = KeyboardType.Phone,
+                            onValueChange = { signUpViewModel.onEvent(SignUpEvents.TelNoChanged(it)) },
+                            label = "Tel No",
+                            errorMessage = uiState.telNoErr
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CustomTextField(
+                            value = uiState.hostelName ?: "",
+                            keyboardType = KeyboardType.Text,
+                            onValueChange = { signUpViewModel.onEvent(SignUpEvents.HostelNameChanged(it)) },
+                            label = "Hostel Name",
+                            errorMessage = uiState.hostelNameErr
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CustomTextField(
+                            value = uiState.password,
+                            onValueChange = { signUpViewModel.onEvent(SignUpEvents.PasswordChanged(it)) },
+                            label = "Password",
+                            errorMessage = uiState.passwordErr,
+                            isAuth = true
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Sign Up Button
+                        Button(
+                            onClick = { signUpViewModel.onEvent(SignUpEvents.SignUpButtonClicked(context.contentResolver)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled =  uiState.firstNameErr == null && uiState.firstName.isNotEmpty() && uiState.lastNameErr == null && uiState.lastName.isNotEmpty() && uiState.emailErr == null && uiState.email.isNotEmpty() && uiState.telNoErr == null && uiState.telNo.isNotEmpty() && uiState.passwordErr == null && uiState.password.isNotEmpty() && !uiState.signingUp && uiState.ck,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MyPrimary,
+                                disabledContainerColor = MyPrimary,
+                            )
+                        ) {
+                            if (uiState.signingUp) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                            } else {
+                                Text("Sign Up", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            }
+                        }
+
+                        // Navigate to Sign In
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Already have an account?", color = MySurface)
+                            TextButton(onClick = onNavigateToSignIn) {
+                                Text("Sign In", color = MyPrimary, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
-                }
-            )
-            AnimatedVisibility(uiState.passwordErr != null) {
-                Text(uiState.passwordErr ?: "", color = MaterialTheme.colorScheme.error)
-            }
-
-            // Sign Up Button
-            Button(
-                onClick = { signUpViewModel.onEvent(SignUpEvents.SignUpButtonClicked(context.contentResolver)) },
-                enabled =  uiState.firstNameErr == null && uiState.firstName.isNotEmpty() && uiState.lastNameErr == null && uiState.lastName.isNotEmpty() && uiState.emailErr == null && uiState.email.isNotEmpty() && uiState.telNoErr == null && uiState.telNo.isNotEmpty() && uiState.passwordErr == null && uiState.password.isNotEmpty() && !uiState.signingUp && uiState.ck,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (uiState.signingUp) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-                } else {
-                    Text("Sign Up")
-                }
-            }
-
-            // Navigate to Sign In
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Already have an account?")
-                Spacer(modifier = Modifier.width(4.dp))
-                TextButton(onClick = onNavigateToSignIn) {
-                    Text("Sign In")
                 }
             }
         }
     }
-
-    
 }

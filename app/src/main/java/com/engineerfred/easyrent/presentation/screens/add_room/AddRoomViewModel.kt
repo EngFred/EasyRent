@@ -41,7 +41,8 @@ class AddRoomViewModel @Inject constructor(
             is AddRoomUiEvents.ChangedMonthlyPayment -> {
                 _uiState.update {
                     it.copy(
-                        monthlyPayment = event.monthlyPayment
+                        monthlyPayment = event.monthlyPayment,
+                        monthlyPaymentErrMessage = if (event.monthlyPayment.isEmpty()) "Add Monthly payment" else if (event.monthlyPayment.toFloatOrNull() == null) "Invalid amount!" else null
                     )
                 }
             }
@@ -73,7 +74,8 @@ class AddRoomViewModel @Inject constructor(
             is AddRoomUiEvents.ChangedRoomNumber -> {
                 _uiState.update { state ->
                     state.copy(
-                        roomNumber = event.roomNumber
+                        roomNumber = event.roomNumber,
+                        roomNumberErrMessage = if (event.roomNumber.isEmpty()) "Add Room number" else if (event.roomNumber.toIntOrNull() == null) "Invalid number!" else null
                     )
                 }
             }

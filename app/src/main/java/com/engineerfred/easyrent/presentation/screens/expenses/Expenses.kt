@@ -1,5 +1,6 @@
 package com.engineerfred.easyrent.presentation.screens.expenses
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,9 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
@@ -36,11 +36,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,7 +51,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -60,68 +64,67 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.engineerfred.easyrent.domain.modals.Expense
 import com.engineerfred.easyrent.domain.modals.ExpenseCategory
+import com.engineerfred.easyrent.presentation.common.CustomTextField
+import com.engineerfred.easyrent.presentation.common.CustomAlertDialog
+import com.engineerfred.easyrent.presentation.theme.LightSkyBlue
+import com.engineerfred.easyrent.presentation.theme.MyCardBg
+import com.engineerfred.easyrent.presentation.theme.MyError
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
+import com.engineerfred.easyrent.presentation.theme.MySecondary
+import com.engineerfred.easyrent.presentation.theme.MySurface
+import com.engineerfred.easyrent.presentation.theme.MyTertiary
 import com.engineerfred.easyrent.util.formatCurrency
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesScreen(
-    modifier: Modifier = Modifier,
     viewModel: ExpensesViewModel = hiltViewModel(),
     onBack: () -> Unit
 ) {
     val uiState = viewModel.uiState.collectAsState().value
 
-    var showDialog by remember { mutableStateOf(false) }
+    var showAddExpenseDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect( uiState.insertSuccess ) {
         if( uiState.insertSuccess ) {
-            showDialog = false
+            showAddExpenseDialog = false
         }
     }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showDialog = true },
-                modifier = Modifier.padding(16.dp)
+                onClick = { showAddExpenseDialog = true },
+                modifier = Modifier.padding(16.dp),
+                containerColor = MyPrimary,
+                contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Expense", tint = Color.White)
+                Icon(Icons.Default.Add, contentDescription = "Add Expense")
             }
         },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            IconButton(
-                                onClick = onBack
-                            ) {
-                                Icon(imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos, contentDescription = null)
-                            }
-                            Text(
-                                text = "Expenses",
-                                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.ExtraBold),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.weight(1f).padding(end = 70.dp)
-                            )
-                        }
-                        Spacer(Modifier.size(20.dp))
-                        HorizontalDivider(thickness = 6.dp)
+            TopAppBar(title = { Text(text = "Expenses") },
+                navigationIcon = {
+                    IconButton(onClick = { onBack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = null
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MySecondary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
+                )
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(MySecondary, MyTertiary)))
                 .padding(paddingValues).padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -129,7 +132,7 @@ fun ExpensesScreen(
 
             when {
                 uiState.isFetching -> {
-                    LinearProgressIndicator(modifier = Modifier.width(100.dp))
+                    LinearProgressIndicator(modifier = Modifier.width(100.dp), color = Color.White)
                 }
 
                 uiState.isFetching.not() && uiState.fetchErr != null -> {
@@ -146,9 +149,17 @@ fun ExpensesScreen(
                         uiState.expenses.isEmpty() -> {
                             Text(
                                 text = "There are no expenses yet. Click the button below to add!",
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
+                                style = TextStyle(
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    color = MySurface,
+                                    shadow = Shadow(
+                                        color = Color.Black.copy(alpha = .5f),
+                                        blurRadius = 6f,
+                                        offset = Offset(2f, 2f)
+                                    )
+                                )
                             )
                         }
 
@@ -164,7 +175,9 @@ fun ExpensesScreen(
                                         val expense = expenses[index]
                                         ExpenseItem(
                                             expense,
-                                            onDelete = { viewModel.onEvent(ExpensesUiEvents.DeleteButtonClicked(expense)) }
+                                            onDelete = {
+                                                viewModel.onEvent(ExpensesUiEvents.DeletedExpense(expense))
+                                            }
                                         )
                                     }
                                 }
@@ -177,12 +190,14 @@ fun ExpensesScreen(
                                 ) {
                                     val totalAmount = uiState.expenses.sumOf { it.amount.toInt() }
                                     Row(
-                                        Modifier.fillMaxWidth().padding(20.dp),
+                                        Modifier.fillMaxWidth()
+                                            .background(Brush.verticalGradient(listOf(MyTertiary, LightSkyBlue)))
+                                            .padding(20.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(fontWeight = FontWeight.Bold, text = "TOTAL:")
+                                        Text(fontWeight = FontWeight.Bold, text = "TOTAL:", color = MySurface)
                                         Spacer(Modifier.size(5.dp))
-                                        Text(fontWeight = FontWeight.Bold, text = "UGX.${formatCurrency(totalAmount.toFloat())}")
+                                        Text(fontWeight = FontWeight.Bold, text = "UGX.${formatCurrency(totalAmount.toFloat())}", color = MySurface)
                                     }
                                 }
                             }
@@ -193,9 +208,9 @@ fun ExpensesScreen(
         }
     }
 
-    if (showDialog) {
+    if (showAddExpenseDialog) {
         AddExpenseDialog(
-            onDismiss = { showDialog = false },
+            onDismiss = { showAddExpenseDialog = false },
             viewModel = viewModel,
             uiState = uiState
         )
@@ -203,26 +218,67 @@ fun ExpensesScreen(
 }
 
 @Composable
-fun ExpenseItem(expense: Expense, onDelete: () -> Unit) {
+fun ExpenseItem(
+    expense: Expense,
+    onDelete: () -> Unit
+) {
+
+    var showConfirmDeleteDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
+                .background(MyCardBg)
                 .padding(16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = expense.title.replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text(text = "UGX.${formatCurrency(expense.amount)}", color = Color.Gray, fontSize = 16.sp)
-                Text(text = expense.category, color = Color.Blue, fontSize = 14.sp)
+                Text(text = expense.title.replaceFirstChar { it.uppercase() },
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MySurface,
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = .5f),
+                            blurRadius = 6f,
+                            offset = Offset(2f, 2f)
+                        )
+                    )
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "UGX.${formatCurrency(expense.amount)}",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        color = MySurface,
+                        shadow = Shadow(
+                            color = Color.Black,
+                            blurRadius = 6f,
+                            offset = Offset(2f, 2f)
+                        )
+                    )
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = expense.category,
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        color = MyPrimary,
+                        shadow = Shadow(
+                            color = Color.Black,
+                            blurRadius = 6f,
+                            offset = Offset(2f, 2f)
+                        )
+                    )
+                )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -237,15 +293,47 @@ fun ExpenseItem(expense: Expense, onDelete: () -> Unit) {
 
                     Icon(imageVector = syncIcon, contentDescription = "Sync Status", tint = syncColor, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = syncText, color = syncColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = syncText,
+                        style = TextStyle(
+                            color = syncColor,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            shadow = Shadow(
+                                color = Color.Black,
+                                blurRadius = 6f,
+                                offset = Offset(2f, 2f)
+                            )
+                        )
+                    )
                 }
 
                 // Delete Button
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                IconButton(onClick = {
+                    showConfirmDeleteDialog = true
+                }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = .5f))
                 }
             }
         }
+    }
+
+    if ( showConfirmDeleteDialog ) {
+        CustomAlertDialog(
+            onDismiss = { showConfirmDeleteDialog = false },
+            confirmButtonText = "Delete",
+            cancelButtonText = "Cancel",
+            title = "Delete Expense",
+            text1 = "Are you sure you want to delete expense: ",
+            boldText1 = expense.title.replaceFirstChar { it.uppercase() },
+            text2 = " with amount: ",
+            boldText2 = "UGX.${formatCurrency(expense.amount)}",
+            text3 = "? This action cannot be undone!" ,
+            onConfirm = {
+                showConfirmDeleteDialog = false
+                onDelete()
+            }
+        )
     }
 }
 
@@ -262,28 +350,43 @@ fun AddExpenseDialog(
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Expense") },
+        containerColor =  MyTertiary,
+        title = {
+            Text(
+                "Add Expense",
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = .5f),
+                        blurRadius = 6f,
+                        offset = Offset(2f, 2f)
+                    )
+                )
+            )
+        },
         text = {
             Column {
-                OutlinedTextField(
+
+                CustomTextField(
                     value = uiState.title,
                     onValueChange = {
                         viewModel.onEvent(ExpensesUiEvents.TitleChanged(it))
                     },
-                    singleLine = true,
-                    label = { Text("Title") },
-                    isError = uiState.title.isEmpty() && uiState.title.length < 3
+                    label = "Title",
+                    errorMessage = uiState.titleErr
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                CustomTextField(
                     value = uiState.amount,
                     onValueChange = {
                         viewModel.onEvent(ExpensesUiEvents.AmountChanged(it))
                     },
-                    singleLine = true,
-                    label = { Text("Amount") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = uiState.amount.isEmpty() || uiState.amount.toFloatOrNull() == null
+                    label = "Amount",
+                    keyboardType = KeyboardType.Number,
+                    errorMessage = uiState.amountErr
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 ExposedDropdownMenuBox(
@@ -300,51 +403,89 @@ fun AddExpenseDialog(
                             .menuAnchor(),
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandCategoriesMenu)
-                        }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MySurface,
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedLabelColor = MySurface,
+                            unfocusedLabelColor = Color.LightGray,
+                            cursorColor = MySurface,
+                            focusedTextColor = MySurface,
+                            unfocusedTextColor = MySurface,
+                            focusedTrailingIconColor = MySurface,
+                            unfocusedTrailingIconColor = MySurface
+                        )
                     )
                     ExposedDropdownMenu(
                         expanded = expandCategoriesMenu,
-                        onDismissRequest = { expandCategoriesMenu = false }
+                        onDismissRequest = { expandCategoriesMenu = false },
+                        modifier = Modifier.background(Brush.horizontalGradient(listOf(MyTertiary, LightSkyBlue)))
                     ) {
-                        ExpenseCategory.entries.forEach { cat ->
+                        ExpenseCategory.entries.forEachIndexed { i, cat ->
                             DropdownMenuItem(
-                                text = { Text(cat.displayName) },
+                                text = {
+                                    Text(
+                                        "${i + 1}. ${cat.displayName}",
+                                        style = TextStyle(
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 17.sp,
+                                            color = MySurface,
+                                            shadow = Shadow(
+                                                color = Color.Black.copy(alpha = .5f),
+                                                blurRadius = 6f,
+                                                offset = Offset(2f, 2f)
+                                            )
+                                        )
+                                    )
+                                },
                                 onClick = {
                                     viewModel.onEvent(ExpensesUiEvents.ChangedCategory(cat.displayName))
                                     expandCategoriesMenu = false
                                 }
                             )
+                            if ( i != ExpenseCategory.entries.lastIndex ) {
+                                HorizontalDivider()
+                            }
                         }
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                CustomTextField(
                     value = uiState.notes ?: "",
                     onValueChange = {
                         viewModel.onEvent(ExpensesUiEvents.NotesChanged(it))
                     },
-                    label = { Text("Notes") },
-                    singleLine = true,
-                    isError = uiState.notes.isNullOrEmpty().not() && uiState.notes?.length!! < 10
+                    label = "Notes (Optional)"
                 )
             }
         },
         confirmButton = {
             Button(onClick = {
-                if (uiState.isValidForm && uiState.isInserting.not()) {
-                    viewModel.onEvent(ExpensesUiEvents.SaveButtonClicked)
-                    onDismiss()
-                }
-            }, enabled = uiState.isInserting.not() && uiState.isValidForm) {
+                viewModel.onEvent(ExpensesUiEvents.SaveButtonClicked)
+                onDismiss()
+            }, enabled = uiState.isInserting.not() && uiState.titleErr == null && uiState.amountErr == null && uiState.category != null && uiState.title.isNotEmpty() && uiState.amount.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MyPrimary,
+                    disabledContainerColor = MyPrimary
+                )
+            ) {
                 if( uiState.isInserting ) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
                 } else {
                     Text("Save")
                 }
             }
         },
         dismissButton = {
-            Button(onClick = { if ( uiState.isInserting.not() ) onDismiss() }) {
+            Button(
+                onClick = { if ( uiState.isInserting.not() ) onDismiss() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.LightGray,
+                    disabledContainerColor = Color.LightGray,
+                    contentColor = Color.Black,
+                    disabledContentColor = Color.Black
+                )
+            ) {
                 Text("Cancel")
             }
         }
@@ -364,30 +505,38 @@ fun ErrorMessage(
             .padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(MyError, MyTertiary)))
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
                 imageVector = Icons.Filled.ErrorOutline,
                 contentDescription = "Error",
-                tint = MaterialTheme.colorScheme.error,
+                tint = Color.White,
                 modifier = Modifier.size(40.dp)
             )
             Text(
                 text = errorMessage,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = MySurface,
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = .5f),
+                        blurRadius = 6f,
+                        offset = Offset(2f, 2f)
+                    )
+                )
             )
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(containerColor = MyPrimary, contentColor = Color.White)
             ) {
                 Text("Retry")
             }

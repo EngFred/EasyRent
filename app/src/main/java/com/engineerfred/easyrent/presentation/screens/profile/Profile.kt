@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,7 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -40,11 +38,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -59,16 +56,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -76,6 +75,17 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.engineerfred.easyrent.R.drawable
 import com.engineerfred.easyrent.domain.modals.UserInfoUpdateStatus
+import com.engineerfred.easyrent.presentation.common.CustomTextField
+import com.engineerfred.easyrent.presentation.common.CustomAlertDialog
+import com.engineerfred.easyrent.presentation.screens.profile.components.CustomUpdateButton
+import com.engineerfred.easyrent.presentation.screens.profile.components.ErrorContainer
+import com.engineerfred.easyrent.presentation.screens.profile.components.ProfileInfoRow
+import com.engineerfred.easyrent.presentation.theme.LightSkyBlue
+import com.engineerfred.easyrent.presentation.theme.MyCardBg
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
+import com.engineerfred.easyrent.presentation.theme.MySecondary
+import com.engineerfred.easyrent.presentation.theme.MySurface
+import com.engineerfred.easyrent.presentation.theme.MyTertiary
 import com.engineerfred.easyrent.util.formatCurrency
 import com.engineerfred.easyrent.util.getCurrentMonthAndYear
 import com.engineerfred.easyrent.util.getMonthlyPaymentsTotal
@@ -93,6 +103,7 @@ fun Profile(
     val uiState = profileViewModel.uiState.collectAsState().value
     val context = LocalContext.current
     var showBottomSheet by remember { mutableStateOf(false) }
+    var showConfirmLogoutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = uiState.signingOutSuccess) {
         if( uiState.signingOutSuccess ) {
@@ -118,7 +129,10 @@ fun Profile(
             TopAppBar(
                 title = { Text("Profile", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MySecondary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
                 ),
                 navigationIcon = {
                     IconButton(
@@ -134,7 +148,11 @@ fun Profile(
                 actions = {
                     var ex by remember { mutableStateOf(false) }
                     Box{
-                        IconButton(onClick = { ex = !ex }) {
+                        IconButton(onClick = {
+                            if( uiState.signingOut.not() ) {
+                                ex = !ex
+                            }
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = null
@@ -142,7 +160,11 @@ fun Profile(
                         }
                         DropdownMenu(
                             expanded = ex,
-                            onDismissRequest = { ex = false }
+                            onDismissRequest = { ex = false },
+                            modifier = Modifier.background(
+                                Brush.horizontalGradient(listOf(
+                                    LightSkyBlue, MyTertiary
+                                )))
                         ) {
                             DropdownMenuItem(
                                 text = {
@@ -150,20 +172,48 @@ fun Profile(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text("Logout", fontSize = 18.sp)
+                                        Text(
+                                            "Logout",
+                                            fontSize = 18.sp,
+                                            style = TextStyle(
+                                                fontWeight = FontWeight.Bold,
+                                                color = MySurface,
+                                                shadow = Shadow(
+                                                    color = Color.Black,
+                                                    blurRadius = 3f
+                                                )
+                                            )
+                                        )
                                         Spacer(Modifier.width(7.dp))
-                                        Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                                            contentDescription = null,
+                                            tint = MySurface,
+                                            modifier = Modifier.size(20.dp)
+                                        )
                                     }
                                 },
                                 onClick = {
                                     if ( uiState.signingOut.not() ) {
                                         ex = false
-                                        profileViewModel.onEvent(ProfileUiEvents.LoggedOut)
+                                        showConfirmLogoutDialog = true
                                     }
                                 }
                             )
+                            HorizontalDivider()
                             DropdownMenuItem(
-                                text = { Text("Delete Account", fontSize = 18.sp, color = MaterialTheme.colorScheme.error) },
+                                text = { Text(
+                                    "Delete Account",
+                                    fontSize = 18.sp,
+                                    style = TextStyle(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Red.copy(alpha = .5f),
+                                        shadow = Shadow(
+                                            color = Color.White,
+                                            blurRadius = 3f
+                                        )
+                                    )
+                                ) },
                                 onClick = {
                                     Toast.makeText(context, "Feature was not implemented!", Toast.LENGTH_SHORT).show()
                                     ex = false
@@ -178,6 +228,7 @@ fun Profile(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(MySecondary, MyTertiary)))
                 .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
@@ -192,7 +243,9 @@ fun Profile(
                         modifier = Modifier
                             .fillMaxSize()
                     ){
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            color = Color.White
+                        )
                     }
                 }
 
@@ -206,6 +259,22 @@ fun Profile(
                 else -> {
                     when {
                         uiState.user != null -> {
+                            Text(
+                                "Tap to edit!",
+                                modifier = Modifier.fillMaxWidth(),
+                                style = TextStyle(
+                                    textAlign = TextAlign.Start,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MyPrimary,
+                                    shadow = Shadow(
+                                        color = Color.White.copy(alpha = .5f),
+                                        blurRadius = 6f,
+                                        offset = Offset(3f,3f)
+                                    )
+                                )
+                            )
+                            Spacer(Modifier.size(16.dp))
                             // Profile Image
                             Box(
                                 modifier = Modifier
@@ -227,9 +296,9 @@ fun Profile(
                                         painter = painterResource(id = drawable.default_profile_image1),
                                         contentDescription = null,
                                         modifier = Modifier
-                                            .size(120.dp) //80
+                                            .size(120.dp)
                                             .clip(CircleShape)
-                                            .border(2.dp, Color.Gray, CircleShape),
+                                            .border(2.dp, MyPrimary, CircleShape),
                                         contentScale = ContentScale.Crop
                                     )
                                 } else {
@@ -237,14 +306,13 @@ fun Profile(
                                         model = uiState.user.imageUrl,
                                         contentDescription = null,
                                         modifier = Modifier
-                                            .size(120.dp) //80
+                                            .size(120.dp)
                                             .clip(CircleShape)
                                             .border(
                                                 2.dp,
-                                                MaterialTheme.colorScheme.primary,
+                                                MyPrimary,
                                                 CircleShape
-                                            ) // Added border
-                                            .background(Color.DarkGray),
+                                            ),
                                         contentScale = ContentScale.Crop
                                     )
                                 }
@@ -258,43 +326,55 @@ fun Profile(
                                 shape = RoundedCornerShape(16.dp),
                                 elevation = CardDefaults.cardElevation(4.dp)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().background(MyCardBg).padding(vertical = 16.dp)
+                                ) {
                                     ProfileInfoRow(
                                         "Name:",
                                         "${uiState.user.firstName} ${uiState.user.lastName}",
                                         onClick = {
-                                            profileViewModel.onEvent(ProfileUiEvents.ChangedUpdateState(UserInfoUpdateStatus.UpdatingNames))
-                                            showBottomSheet = true
+                                            if( uiState.signingOut.not() ) {
+                                                profileViewModel.onEvent(ProfileUiEvents.ChangedUpdateState(UserInfoUpdateStatus.UpdatingNames))
+                                                showBottomSheet = true
+                                            }
                                         }
                                     )
                                     ProfileInfoRow(
                                         "Hostel:",
                                         uiState.user.hostelName ?: "N/A",
                                         onClick = {
-                                            profileViewModel.onEvent(ProfileUiEvents.ChangedUpdateState(UserInfoUpdateStatus.UpdatingHostelName))
-                                            showBottomSheet = true
+                                            if(  uiState.signingOut.not() ) {
+                                                profileViewModel.onEvent(ProfileUiEvents.ChangedUpdateState(UserInfoUpdateStatus.UpdatingHostelName))
+                                                showBottomSheet = true
+                                            }
                                         }
                                     )
                                     ProfileInfoRow(
                                         "Email:",
                                         uiState.user.email,
                                         onClick = {
-                                            Toast.makeText(context, "Update for emails currently not implemented! Try again later.", Toast.LENGTH_LONG).show()
+                                            if( uiState.signingOut.not() ) {
+                                                Toast.makeText(context, "Can't update email!", Toast.LENGTH_LONG).show()
+                                            }
                                         }
                                     )
                                     ProfileInfoRow(
                                         "Phone:",
                                         uiState.user.telNo,
                                         onClick = {
-                                            profileViewModel.onEvent(ProfileUiEvents.ChangedUpdateState(UserInfoUpdateStatus.UpdatingPhoneNumber))
-                                            showBottomSheet = true
+                                            if( uiState.signingOut.not()  ) {
+                                                profileViewModel.onEvent(ProfileUiEvents.ChangedUpdateState(UserInfoUpdateStatus.UpdatingPhoneNumber))
+                                                showBottomSheet = true
+                                            }
                                         }
                                     )
                                     ProfileInfoRow(
                                         "Joined:",
                                         uiState.user.createdAt.toFormattedDate(),
                                         onClick = {
-                                            Toast.makeText(context, "This field can't be updated!", Toast.LENGTH_SHORT).show()
+                                            if( uiState.signingOut.not() ) {
+                                                Toast.makeText(context, "This field can't be updated!", Toast.LENGTH_SHORT).show()
+                                            }
                                         }
                                     )
                                 }
@@ -309,10 +389,11 @@ fun Profile(
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(80.dp)
+                                        modifier = Modifier.size(80.dp),
+                                        color = Color.White
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text("Signing out...")
+                                    Text("Signing out...", color = MySurface)
                                 }
                             }
                             Spacer(modifier = Modifier.weight(1f))
@@ -325,10 +406,23 @@ fun Profile(
                             ) {
                                 val expectedIncome = uiState.rooms.sumOf { it.monthlyRent.toInt() }
                                 Column(
-                                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                                    modifier = Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(MyTertiary, LightSkyBlue))).padding(20.dp),
                                 ) {
-                                    Text(getCurrentMonthAndYear(), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontWeight = FontWeight.ExtraBold)
-                                    Spacer(Modifier.size(6.dp))
+                                    Text(
+                                        getCurrentMonthAndYear(),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        style = TextStyle(
+                                            textAlign = TextAlign.Center,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 20.sp,
+                                            color = MySurface,
+                                            shadow = Shadow(
+                                                color = Color.Black,
+                                                blurRadius = 3f
+                                            )
+                                        )
+                                    )
+                                    Spacer(Modifier.size(8.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
@@ -338,18 +432,40 @@ fun Profile(
                                             verticalArrangement = Arrangement.Center,
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Text(fontWeight = FontWeight.Bold, text = "Total Income", textDecoration = TextDecoration.Underline)
+                                            Text(
+                                                fontWeight = FontWeight.Bold,
+                                                text = "Total Income",
+                                                fontSize = 20.sp,
+                                                textDecoration = TextDecoration.Underline,
+                                                color = Color.White
+                                            )
                                             Spacer(Modifier.size(10.dp))
-                                            Text(fontWeight = FontWeight.Bold, text = "UGX.${getMonthlyPaymentsTotal(uiState.payments)}")
+                                            Text(
+                                                fontWeight = FontWeight.Bold,
+                                                text = "UGX.${getMonthlyPaymentsTotal(uiState.payments)}",
+                                                fontSize = 20.sp,
+                                                color = Color.White
+                                            )
                                         }
                                         Spacer(modifier = Modifier.size(15.dp))
                                         Column(
                                             verticalArrangement = Arrangement.Center,
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Text(fontWeight = FontWeight.Bold, text = "Expected Income", textDecoration = TextDecoration.Underline)
+                                            Text(
+                                                fontWeight = FontWeight.Bold,
+                                                text = "Expected Income",
+                                                fontSize = 20.sp,
+                                                textDecoration = TextDecoration.Underline,
+                                                color = Color.White
+                                            )
                                             Spacer(Modifier.size(10.dp))
-                                            Text(fontWeight = FontWeight.Bold, text = "UGX.${formatCurrency(expectedIncome.toFloat())}")
+                                            Text(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 20.sp,
+                                                text = "UGX.${formatCurrency(expectedIncome.toFloat())}",
+                                                color = Color.White
+                                            )
                                         }
                                     }
                                 }
@@ -358,7 +474,6 @@ fun Profile(
                         else -> {
                             ErrorContainer(
                                 error = "User not found!",
-                                errColor = Color.Gray,
                                 onRetry = { profileViewModel.onEvent(ProfileUiEvents.RetryClicked)
                                 }
                             )
@@ -367,7 +482,6 @@ fun Profile(
                 }
             }
         }
-
         // Bottom Sheet Dialog
         if (showBottomSheet) {
             val launcher = rememberLauncherForActivityResult(
@@ -380,7 +494,9 @@ fun Profile(
 
             ModalBottomSheet(
                 modifier = Modifier.imePadding(),
-                onDismissRequest = { showBottomSheet = false }
+                onDismissRequest = { showBottomSheet = false },
+                containerColor = MyCardBg,
+                contentColor = MySurface
             ) {
                 Column(
                     modifier = Modifier
@@ -389,7 +505,17 @@ fun Profile(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     val bottomSheetTitleTxt = if ( uiState.updateState == UserInfoUpdateStatus.UpdatingNames ) "Update Names" else if( uiState.updateState == UserInfoUpdateStatus.UpdatingHostelName ) "Update Hostel name" else if (uiState.updateState == UserInfoUpdateStatus.UpdatingPhoneNumber) "Update Phone number" else "Update Profile Picture"
-                    Text(bottomSheetTitleTxt, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(
+                        bottomSheetTitleTxt,
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                            shadow = Shadow(
+                                color = Color.Black,
+                                blurRadius = 6f
+                            )
+                        ),
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     when( uiState.updateState ) {
                         is UserInfoUpdateStatus.UpdatingProfileImage -> {
@@ -422,8 +548,8 @@ fun Profile(
                                     onClick = { launcher.launch("image/*") },
                                     modifier = Modifier
                                         .align(Alignment.BottomEnd)
-                                        .background(Color.White, CircleShape)
-                                        .border(1.dp, Color.Gray, CircleShape)
+                                        .background(MyPrimary, CircleShape)
+                                        .border(1.dp, MyPrimary, CircleShape)
                                         .padding(4.dp),
                                     enabled = uiState.isUpdating.not()
                                 ) {
@@ -431,7 +557,7 @@ fun Profile(
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(
+                            CustomUpdateButton(
                                 onClick = {
                                     if ( uiState.selectedImgUrl !=  null ) {
                                         profileViewModel.onEvent(ProfileUiEvents.UpdateButtonClicked(context.contentResolver))
@@ -439,46 +565,40 @@ fun Profile(
                                         Toast.makeText(context, "Select an image!", Toast.LENGTH_SHORT).show()
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                enabled = uiState.isUpdating.not()
-                            ) {
-                                if ( uiState.isUpdating ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                                } else {
-                                    Text("Update profile image")
-                                }
-                            }
+                                text = "Update profile image",
+                                enabled = uiState.isUpdating.not() && uiState.signingOut.not() ,
+                                updating = uiState.isUpdating
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                         is UserInfoUpdateStatus.UpdatingNames -> {
-                            OutlinedTextField(
+                            CustomTextField(
                                 value = uiState.newFirstName,
-                                onValueChange = { profileViewModel.onEvent(ProfileUiEvents.ChangedFirstName(it.trim())) },
-                                label = { Text("First name") },
-                                isError = uiState.firstNameErr != null,
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.None)
+                                onValueChange = {
+                                    profileViewModel.onEvent(
+                                        ProfileUiEvents.ChangedFirstName(
+                                            it.trim()
+                                        )
+                                    )
+                                },
+                                label = "First name",
+                                errorMessage = uiState.firstNameErr,
                             )
-                            AnimatedVisibility(visible = uiState.firstNameErr != null) {
-                                Text(uiState.firstNameErr ?: "", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
-                            }
                             Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedTextField(
+                            CustomTextField(
                                 value = uiState.newLastName,
-                                onValueChange = { profileViewModel.onEvent(ProfileUiEvents.ChangedLastName(it.trim())) },
-                                label = { Text("Last name") },
-                                isError = uiState.lastNameErr != null,
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.None)
+                                onValueChange = {
+                                    profileViewModel.onEvent(
+                                        ProfileUiEvents.ChangedLastName(
+                                            it.trim()
+                                        )
+                                    )
+                                },
+                                label = "Last name",
+                                errorMessage = uiState.lastNameErr
                             )
-                            AnimatedVisibility(visible = uiState.lastNameErr != null) {
-                                Text(uiState.lastNameErr ?: "", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
-                            }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(
+                            CustomUpdateButton(
                                 onClick = {
                                     if ( uiState.firstNameErr == null && uiState.lastNameErr == null && uiState.newLastName.isNotEmpty() && uiState.newFirstName.isNotEmpty() ) {
                                         profileViewModel.onEvent(ProfileUiEvents.UpdateButtonClicked(context.contentResolver))
@@ -486,33 +606,21 @@ fun Profile(
                                         Toast.makeText(context, "Invalid form!", Toast.LENGTH_SHORT).show()
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                enabled = uiState.isUpdating.not()
-                            ) {
-                                if ( uiState.isUpdating ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                                } else {
-                                    Text("Update names")
-                                }
-                            }
+                                text = "Update names",
+                                enabled = uiState.isUpdating.not() && uiState.signingOut.not() ,
+                                updating = uiState.isUpdating
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                         is UserInfoUpdateStatus.UpdatingHostelName -> {
-                            OutlinedTextField(
+                            CustomTextField(
                                 value = uiState.newHostelName,
                                 onValueChange = { profileViewModel.onEvent(ProfileUiEvents.ChangedHostelName(it.trim())) },
-                                label = { Text("Hostel name") },
-                                isError = uiState.hostelNameErr != null,
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.None)
+                                label = "Hostel name",
+                                errorMessage = uiState.hostelNameErr,
                             )
-                            AnimatedVisibility(visible = uiState.hostelNameErr != null) {
-                                Text(uiState.hostelNameErr ?: "", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
-                            }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(
+                            CustomUpdateButton(
                                 onClick = {
                                     if ( uiState.hostelNameErr == null && uiState.newHostelName.isNotEmpty() ) {
                                         profileViewModel.onEvent(ProfileUiEvents.UpdateButtonClicked(context.contentResolver))
@@ -520,35 +628,23 @@ fun Profile(
                                         Toast.makeText(context, "Invalid form!", Toast.LENGTH_SHORT).show()
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                enabled = uiState.isUpdating.not()
-                            ) {
-                                if ( uiState.isUpdating ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                                } else {
-                                    Text("Update hostel Name")
-                                }
-                            }
+                                text = "Update hostel Name",
+                                enabled = uiState.isUpdating.not() && uiState.signingOut.not() ,
+                                updating = uiState.isUpdating
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                         is UserInfoUpdateStatus.UpdatingPhoneNumber -> {
-                            OutlinedTextField(
+                            CustomTextField(
                                 value = uiState.newPhoneNumber,
                                 onValueChange = { profileViewModel.onEvent(ProfileUiEvents.ChangedPhoneNumber(it.trim())) },
-                                label = { Text("Phone name") },
-                                isError = uiState.phoneNameErr != null,
-                                singleLine = true,
+                                label = "Phone name",
+                                errorMessage = uiState.phoneNameErr,
                                 modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    keyboardType = KeyboardType.Phone
-                                )
+                                keyboardType = KeyboardType.Phone
                             )
-                            AnimatedVisibility(visible = uiState.phoneNameErr != null) {
-                                Text(uiState.phoneNameErr ?: "", color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
-                            }
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(
+                            CustomUpdateButton(
                                 onClick = {
                                     if ( uiState.phoneNameErr == null && uiState.newPhoneNumber.isNotEmpty() ) {
                                         profileViewModel.onEvent(ProfileUiEvents.UpdateButtonClicked(context.contentResolver))
@@ -556,73 +652,39 @@ fun Profile(
                                         Toast.makeText(context, "Invalid form!", Toast.LENGTH_SHORT).show()
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                enabled = uiState.isUpdating.not()
-                            ) {
-                                if ( uiState.isUpdating ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                                } else {
-                                    Text("Update phone number")
-                                }
-                            }
+                                text = "Update phone number",
+                                enabled = uiState.isUpdating.not() && uiState.signingOut.not() ,
+                                updating = uiState.isUpdating
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                         null -> Unit
                     }
                     Button(
                         onClick = { showBottomSheet = false },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
-
                     ) {
                         Text("Cancel", color = Color.Black)
                     }
                 }
             }
         }
-    }
-}
 
-
-@Composable
-fun ProfileInfoRow(label: String, value: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable { onClick() },
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
-        Spacer(Modifier.width(10.dp))
-        Text(text = value, fontSize = 20.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-
-@Composable
-fun ErrorContainer(
-    modifier: Modifier = Modifier,
-    error: String,
-    onRetry: () -> Unit,
-    errColor: Color = Color.Red
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = error,
-            color = errColor,
-            textAlign = TextAlign.Center,
-            fontSize = 16.sp
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(onClick = { onRetry() }) {
-            Text("Retry")
+        if( showConfirmLogoutDialog ) {
+            CustomAlertDialog(
+                title = "Log out?",
+                text1 = "You are about to logout! Would you like to proceed?",
+                confirmButtonText = "Yes",
+                onConfirm = {
+                    showConfirmLogoutDialog = false
+                    profileViewModel.onEvent(ProfileUiEvents.LoggedOut)
+                },
+                onDismiss = {
+                    showConfirmLogoutDialog = false
+                }
+            )
         }
     }
 }
