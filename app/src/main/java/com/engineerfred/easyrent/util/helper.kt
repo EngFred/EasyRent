@@ -41,16 +41,6 @@ fun verifyEmail(email: String) : String? {
     }
 }
 
-fun getTimeUntilEndOfMonth(): Long {
-    val calendar = Calendar.getInstance()
-    val lastDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-    calendar.set(Calendar.DAY_OF_MONTH, lastDay)
-    calendar.set(Calendar.HOUR_OF_DAY, 23)
-    calendar.set(Calendar.MINUTE, 59)
-    calendar.set(Calendar.SECOND, 59)
-    return calendar.timeInMillis - System.currentTimeMillis()
-}
-
 fun formatCurrency(figure: Float): String {
     val formatter = NumberFormat.getNumberInstance(Locale.US)
     val formattedFigure = formatter.format(figure)

@@ -56,18 +56,20 @@ class RoomsRepositoryImpl @Inject constructor(
 
             cache.roomsDao().insertRoom(room.copy(userId = userId).toRoomEntity())
 
-            val supabaseRoom = room.copy(isSynced = true, userId = userId).toRoomDTO()
-            val result = supabaseClient.from(ROOMS).insert(supabaseRoom){
-                select()
-            }.decodeSingleOrNull<RoomDto>()
+            try {
+                Log.i(TAG, "Room inserted in cache successfully! Inserting room in Supabase....")
+                val supabaseRoom = room.copy(isSynced = true, userId = userId).toRoomDTO()
+                val result = supabaseClient.from(ROOMS).insert(supabaseRoom){
+                    select()
+                }.decodeSingleOrNull<RoomDto>()
 
-            if ( result == null ) {
-                Log.e(TAG, "Room insertion failed in Supabase.")
-                return Resource.Error("Failed to insert room in database")
+                 result?.let {
+                     Log.i(TAG, "Room inserted in Supabase successfully.")
+                     cache.roomsDao().updateRoom(result.toRoomEntity())
+                 }
+            } catch (ex: Exception) {
+                Log.e(TAG, "Error inserting room in Supabase: ${ex.message}")
             }
-
-            Log.i(TAG, "Room inserted in Supabase successfully.")
-            cache.roomsDao().updateRoom(result.toRoomEntity())
 
             Log.i(TAG, "Room insertion completed successfully and (cached).")
             return Resource.Success(room.id)
@@ -95,22 +97,23 @@ class RoomsRepositoryImpl @Inject constructor(
             Log.i(TAG, "Marking room as deleted in cache...")
             cache.roomsDao().markRoomAsDeleted(room.id)
 
-            Log.i(TAG, "Successfully marked room as deleted in cache! Deleting from room from supabase....")
-            val result = supabaseClient.from(ROOMS).delete {
-                select()
-                filter {
-                    eq(COLUMN_ID, room.id)
-                    eq("user_id", userId)
+            try {
+                Log.i(TAG, "Successfully marked room as deleted in cache! Deleting from room from supabase....")
+                val result = supabaseClient.from(ROOMS).delete {
+                    select()
+                    filter {
+                        eq(COLUMN_ID, room.id)
+                        eq("user_id", userId)
+                    }
+                }.decodeSingleOrNull<RoomDto>()
+
+                result?.let {
+                    Log.i(TAG, "Room deleted successfully from cloud! Now permanently deleting room from cache...")
+                    cache.roomsDao().deleteRoom(room.id)
                 }
-            }.decodeSingleOrNull<RoomDto>()
-
-            if( result == null ) {
-                Log.i(TAG, "Failed to delete room from supabase")
-                return Resource.Success(Unit)
+            } catch (ex: Exception) {
+                Log.i(TAG, "Error deleting room from supabase: ${ex.message}")
             }
-
-            Log.i(TAG, "Room deleted successfully from cloud! Now permanently deleting room from cache...")
-            cache.roomsDao().deleteRoom(room.id)
 
             Log.i(TAG, "Permanently deleted room from cache!")
             return Resource.Success(Unit)

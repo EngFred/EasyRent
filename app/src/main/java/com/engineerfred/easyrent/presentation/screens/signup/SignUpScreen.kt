@@ -172,7 +172,7 @@ fun SignUpScreen(
                             value = uiState.hostelName ?: "",
                             keyboardType = KeyboardType.Text,
                             onValueChange = { signUpViewModel.onEvent(SignUpEvents.HostelNameChanged(it)) },
-                            label = "Hostel Name",
+                            label = "Hostel Name (optional)",
                             errorMessage = uiState.hostelNameErr
                         )
                         Spacer(modifier = Modifier.height(8.dp))

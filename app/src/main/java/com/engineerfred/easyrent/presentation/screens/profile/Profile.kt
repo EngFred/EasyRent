@@ -331,7 +331,7 @@ fun Profile(
                                 ) {
                                     ProfileInfoRow(
                                         "Name:",
-                                        "${uiState.user.firstName} ${uiState.user.lastName}",
+                                        "${uiState.user.firstName.replaceFirstChar { it.uppercase() }} ${uiState.user.lastName.replaceFirstChar { it.uppercase() }}",
                                         onClick = {
                                             if( uiState.signingOut.not() ) {
                                                 profileViewModel.onEvent(ProfileUiEvents.ChangedUpdateState(UserInfoUpdateStatus.UpdatingNames))

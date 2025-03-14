@@ -21,7 +21,7 @@ fun NavGraphBuilder.authGraph(navController: NavHostController) {
             AuthScreens.SignIn.dest,
         ) {
             SignInScreen(
-                onNavigateToSignUp = { navController.navigate(AuthScreens.SignUp.dest) },
+                onNavigateToSignUp = { navController.navigate(AuthScreens.SignUp.dest) { launchSingleTop = true } },
                 onLoginSuccess = { navController.navigateToMainGraph() }
             )
         }
@@ -40,7 +40,7 @@ fun NavGraphBuilder.authGraph(navController: NavHostController) {
             }
         ) {
             SignUpScreen(
-                onNavigateToSignIn = { navController.navigate(AuthScreens.SignIn.dest) },
+                onNavigateToSignIn = { navController.navigate(AuthScreens.SignIn.dest) { launchSingleTop = true } },
                 onSignUpSuccess = { navController.navigateToMainGraph() }
             )
         }
@@ -49,6 +49,7 @@ fun NavGraphBuilder.authGraph(navController: NavHostController) {
 
 fun NavHostController.navigateToMainGraph() {
     navigate(MAIN_GRAPH) {
+        launchSingleTop = true
         popUpTo(AUTH_GRAPH) { inclusive = true }
     }
 }

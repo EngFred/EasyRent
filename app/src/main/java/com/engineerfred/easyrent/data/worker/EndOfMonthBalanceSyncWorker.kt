@@ -31,10 +31,17 @@ class EndOfMonthBalanceSyncWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
-        Log.d(TAG, "Calculating balances...")
-        val userId = prefs.getUserId().firstOrNull()
-        if (userId != null) {
-            Log.d(TAG, "User id is null!")
+
+        try {
+            Log.wtf("MyWorker", "EndOfMonthBalanceSyncWorker started!")
+            val userId = prefs.getUserId().firstOrNull()
+
+            if ( userId == null ) {
+                Log.e(TAG, "User ID is null. Cannot sync tenants.")
+                return Result.failure()
+            }
+
+
             val tenants = cache.tenantsDao().getAllTenants(userId).firstOrNull()
             tenants?.forEach { tenant ->
                 val room = cache.roomsDao().getRoomById(tenant.roomId).firstOrNull()
@@ -63,10 +70,12 @@ class EndOfMonthBalanceSyncWorker @AssistedInject constructor(
                     }
                 }
             }
-            Log.d(TAG, "Done!")
+
+            Log.d(TAG, "Success!")
             return Result.success()
-        } else {
-            Log.d(TAG, "User id is null!")
+
+        }catch (ex: Exception) {
+            Log.e(TAG, "Error checking balances: ${ex.message}")
             return Result.failure()
         }
     }

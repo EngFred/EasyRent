@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.work.Configuration
 import com.engineerfred.easyrent.data.worker.WorkerFactory
+import com.engineerfred.easyrent.util.ChannelNames
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -33,28 +34,28 @@ class EasyRentApp : Application(), Configuration.Provider {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannels() {
         val tenantsChannel = NotificationChannel(
-            "tenants_channel",
+            ChannelNames.TenantsChannel.name,
             "Tenants",
             NotificationManager.IMPORTANCE_LOW
         )
         val unpaidTenantsChannel = NotificationChannel(
-            "unpaid_tenants_channel",
+            ChannelNames.UnpaidTenantsChannel.name,
             "Unpaid Tenants",
             NotificationManager.IMPORTANCE_HIGH
         )
         val roomsChannel = NotificationChannel(
-            "rooms_channel",
+            ChannelNames.RoomsChannel.name,
             "Rooms",
             NotificationManager.IMPORTANCE_LOW
         )
         val paymentsChannel = NotificationChannel(
-            "payments_channel",
+            ChannelNames.PaymentsChannel.name,
             "Payments",
             NotificationManager.IMPORTANCE_LOW
         )
 
         val expensesChannel = NotificationChannel(
-            "expenses_channel",
+            ChannelNames.ExpensesChannel.name,
             "Expenses",
             NotificationManager.IMPORTANCE_LOW
         )

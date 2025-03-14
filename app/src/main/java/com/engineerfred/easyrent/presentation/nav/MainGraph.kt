@@ -31,22 +31,34 @@ fun NavGraphBuilder.mainGraph(
         composable( route = MainScreens.RoomsList.dest ) {
             RoomsScreen(
                 onAddRoom = {
-                    navController.navigate(MainScreens.RoomDetails.createRoute(null))
+                    navController.navigate(MainScreens.RoomDetails.createRoute(null)) {
+                        launchSingleTop = true
+                    }
                 },
                 onPaymentsClicked = {
-                    navController.navigate(MainScreens.Payments.dest)
+                    navController.navigate(MainScreens.Payments.dest) {
+                        launchSingleTop = true
+                    }
                 },
                 onExpensesClicked = {
-                    navController.navigate(MainScreens.Expenses.dest)
+                    navController.navigate(MainScreens.Expenses.dest) {
+                        launchSingleTop = true
+                    }
                 },
                 onTenantsClicked = {
-                    navController.navigate(MainScreens.Tenants.dest)
+                    navController.navigate(MainScreens.Tenants.dest) {
+                        launchSingleTop = true
+                    }
                 },
                 onSettingsClicked = {
-                    navController.navigate(MainScreens.Profile.dest)
+                    navController.navigate(MainScreens.Profile.dest) {
+                        launchSingleTop = true
+                    }
                 },
                 onAddTenant = { createdRoomId, monthlyRent, roomNumber ->
-                    navController.navigate(MainScreens.TenantDetails.createRoute(tenantId = null, roomId = createdRoomId, monthlyRent = monthlyRent, roomNumber = roomNumber ))
+                    navController.navigate(MainScreens.TenantDetails.createRoute(tenantId = null, roomId = createdRoomId, monthlyRent = monthlyRent, roomNumber = roomNumber )) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }

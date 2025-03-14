@@ -77,12 +77,6 @@ class AuthRepositoryImpl @Inject constructor(
                 uploadImage(contentResolver, loggedInUser.id, user)
             } else null
 
-            if (uploadedImageUrl.isNullOrEmpty()) {
-                Log.e(TAG, "Something went wrong!... Uploaded imageUrl is null")
-                prefs.clearUserId()
-                return Resource.Error("Failed to upload image!")
-            }
-
             // Insert user into Supabase
             val result = supabaseClient.from(USERS).insert(
                 user.copy(id = loggedInUser.id, imageUrl = uploadedImageUrl)
@@ -130,7 +124,6 @@ class AuthRepositoryImpl @Inject constructor(
 
             Log.i(TAG, "Logged in successfully! Saving userID in preferences....")
             prefs.saveUserId(loggedInUser.id)
-
 
             Log.i(TAG, "User id saved successfully! Resetting cache...")
             resetDb() //resetting db. Deleting all previous cached data
@@ -227,7 +220,6 @@ class AuthRepositoryImpl @Inject constructor(
                 Log.i(TAG, "Upload successfully! Image path: ${buildImageUrl(uploadedImgUrl.path)}")
                 buildImageUrl(uploadedImgUrl.path)
             }catch (ex: Exception) {
-                Log.e(TAG, "Upload failed! Error: $ex")
                 throw ex
             }
         }
