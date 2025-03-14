@@ -189,7 +189,7 @@ fun Payments(
                                     }
                                 }
                                 Box(Modifier
-                                    .fillMaxWidth().padding(vertical = 16.dp, horizontal = 10.dp)
+                                    .fillMaxWidth().padding(vertical = 24.dp, horizontal = 60.dp)
                                     .align(Alignment.BottomCenter), contentAlignment = Alignment.Center){
                                     Text(
                                         "Long press or simply press on any payment to delete!",

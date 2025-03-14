@@ -1,8 +1,12 @@
 package com.engineerfred.easyrent.presentation.nav
 
 import android.os.Build
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutHorizontally
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -18,7 +22,6 @@ import com.engineerfred.easyrent.presentation.screens.profile.Profile
 import com.engineerfred.easyrent.presentation.screens.rooms.RoomsScreen
 import com.engineerfred.easyrent.presentation.screens.tenants.Tenants
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.mainGraph(
     navController: NavHostController
@@ -28,7 +31,21 @@ fun NavGraphBuilder.mainGraph(
         startDestination = MainScreens.RoomsList.dest,
         route = Graphs.MAIN_GRAPH
     ) {
-        composable( route = MainScreens.RoomsList.dest ) {
+        composable(
+            route = MainScreens.RoomsList.dest,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+        ) {
             RoomsScreen(
                 onAddRoom = {
                     navController.navigate(MainScreens.RoomDetails.createRoute(null)) {
@@ -71,9 +88,6 @@ fun NavGraphBuilder.mainGraph(
                     nullable = true
                 }
             ),
-            enterTransition = {
-                slideInHorizontally()
-            }
         ) { backStackEntry ->
             val roomId = backStackEntry.arguments?.getString("roomId")
             AddRoomScreen(
@@ -91,7 +105,7 @@ fun NavGraphBuilder.mainGraph(
         }
 
         composable(
-            MainScreens.TenantDetails.dest,
+            route = MainScreens.TenantDetails.dest,
             arguments = listOf(
                 navArgument("tenantId") {
                     type = NavType.StringType
@@ -109,7 +123,19 @@ fun NavGraphBuilder.mainGraph(
                     type = NavType.StringType
                     nullable = true
                 }
-            )
+            ),
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { -it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutVertically(
+                    targetOffsetY = { -it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
         ) { navBackStackEntry ->
             val tenantId = navBackStackEntry.arguments?.getString("tenantId")
             val roomId = navBackStackEntry.arguments?.getString("roomId")
@@ -133,7 +159,7 @@ fun NavGraphBuilder.mainGraph(
         }
 
         composable(
-            route = MainScreens.Payments.dest
+            route = MainScreens.Payments.dest,
         ) {
             Payments(
                 onAddPayment = {
@@ -183,7 +209,19 @@ fun NavGraphBuilder.mainGraph(
         }
 
         composable(
-            route = MainScreens.AddPayment.dest
+            route = MainScreens.AddPayment.dest,
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
         ) {
             AddPayment(
                 onBack = {

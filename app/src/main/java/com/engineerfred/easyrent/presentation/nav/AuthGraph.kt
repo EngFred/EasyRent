@@ -1,5 +1,6 @@
 package com.engineerfred.easyrent.presentation.nav
 
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.navigation.NavGraphBuilder
@@ -30,14 +31,17 @@ fun NavGraphBuilder.authGraph(navController: NavHostController) {
         composable(
             route = AuthScreens.SignUp.dest,
             enterTransition = {
-                slideInHorizontally()
-            },
-            popExitTransition = {
-                slideOutHorizontally()
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
             },
             exitTransition = {
-                slideOutHorizontally()
-            }
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
         ) {
             SignUpScreen(
                 onNavigateToSignIn = { navController.navigate(AuthScreens.SignIn.dest) { launchSingleTop = true } },

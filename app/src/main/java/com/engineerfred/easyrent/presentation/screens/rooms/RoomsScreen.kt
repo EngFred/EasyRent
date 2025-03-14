@@ -85,12 +85,6 @@ fun RoomsScreen(
         }
     }
 
-    LaunchedEffect(uiState.deletingRoom) {
-        if ( uiState.deletingRoom ) {
-            Toast.makeText(context, "Deleting room...", Toast.LENGTH_LONG).show()
-        }
-    }
-
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {

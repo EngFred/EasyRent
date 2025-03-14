@@ -374,26 +374,6 @@ fun AddPayment(
                     }
                 }
             }
-
-            if ( uiState.selectedTenant == null ) {
-                Box(Modifier
-                    .fillMaxWidth()
-                    .weight(1f), contentAlignment = Alignment.BottomCenter){
-                    Text("Select a tenant first, to proceed with making a payment!",
-                        style = TextStyle(
-                            color = Color.Cyan,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            fontSize = 15.sp,
-                            shadow = Shadow(
-                                color = Color.Black,
-                                blurRadius = 6f,
-                                offset = Offset(2f, 2f)
-                            )
-                        )
-                    )
-                }
-            }
         }
     }
 }

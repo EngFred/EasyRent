@@ -86,7 +86,7 @@ fun PaymentItem(
             ) {
                 Text(
                     text = "Room ${payment.roomNumber} - ${payment.tenantName.replaceFirstChar { it.uppercase() }}",
-                    fontSize = 19.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = MySurface
                 )

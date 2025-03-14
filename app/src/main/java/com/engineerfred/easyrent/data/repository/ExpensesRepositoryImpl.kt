@@ -7,6 +7,7 @@ import com.engineerfred.easyrent.data.mappers.toExpense
 import com.engineerfred.easyrent.data.mappers.toExpenseDTO
 import com.engineerfred.easyrent.data.mappers.toExpenseEntity
 import com.engineerfred.easyrent.data.remote.dto.ExpenseDto
+import com.engineerfred.easyrent.data.repository.PaymentsRepositoryImpl.Companion
 import com.engineerfred.easyrent.data.resource.Resource
 import com.engineerfred.easyrent.domain.modals.Expense
 import com.engineerfred.easyrent.domain.repository.ExpensesRepository
@@ -108,15 +109,14 @@ class ExpensesRepositoryImpl @Inject constructor(
             expensesDao.updateExpense(expense.copy(isDeleted = true, isSynced = false).toExpenseEntity())
 
             try {
-                val result = supabaseClient.from(EXPENSES).delete {
-                    select()
+                supabaseClient.from(EXPENSES).delete {
                     filter {
                         eq("id", expense.id)
                         eq("user_id", userId)
                     }
-                }.decodeSingleOrNull<ExpenseDto>()
+                }
 
-                result?.let { expensesDao.deleteExpense(expense.toExpenseEntity()) }
+                expensesDao.deleteExpense(expense.toExpenseEntity())
             }catch (ex: Exception) {
                 Log.e(TAG, "Supabase expense deletion error: ${ex.message}")
             }
@@ -139,12 +139,16 @@ class ExpensesRepositoryImpl @Inject constructor(
 
         val expensesFlow = expensesDao.getAllExpenses( userID ).map { cachedExpenses ->
             if ( cachedExpenses.isEmpty() ) {
-                val results = supabaseClient.from(EXPENSES).select{
-                    filter { eq("user_id", userID) }
-                }.decodeList<ExpenseDto>()
+                try {
+                    val results = supabaseClient.from(EXPENSES).select{
+                        filter { eq("user_id", userID) }
+                    }.decodeList<ExpenseDto>()
 
-                if ( results.isNotEmpty() ) {
-                    expensesDao.cacheAllRemoteExpenses(results.map { it.toExpenseEntity() })
+                    if ( results.isNotEmpty() ) {
+                        expensesDao.cacheAllRemoteExpenses(results.map { it.toExpenseEntity() })
+                    }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Supabase error: $ex")
                 }
             }
             Resource.Success(cachedExpenses.map { it.toExpense() })
