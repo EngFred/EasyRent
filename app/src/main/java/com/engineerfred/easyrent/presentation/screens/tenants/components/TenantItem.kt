@@ -1,5 +1,6 @@
 package com.engineerfred.easyrent.presentation.screens.tenants.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -81,14 +82,14 @@ fun TenantItem(
                     contentAlignment = Alignment.BottomEnd
                 ) {
                     if( tenant.profilePic != null ) {
+                        Log.d("TenantItem", "Tenant profile pic: ${tenant.profilePic}")
                         GlideImage(
                             model = tenant.profilePic,
                             contentDescription = "${tenant.name}'s profile picture",
                             modifier = Modifier
                                 .size(70.dp)
                                 .clip(CircleShape)
-                                .border(2.dp, MyPrimary, CircleShape) // Added border
-                                .background(Color.DarkGray),
+                                .border(2.dp, MyPrimary, CircleShape), // Added border
                             contentScale = ContentScale.Crop
                         )
                     } else {

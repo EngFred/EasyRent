@@ -28,7 +28,6 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-
 object WorkerUtils {
 
     fun createForeGroundInfo(
@@ -142,6 +141,55 @@ object WorkerUtils {
             paymentsSyncRequest
         )
     }
+
+    fun syncRoomsImmediately(workManager: WorkManager) {
+        val oneTimeRequest = OneTimeWorkRequestBuilder<RoomsSyncWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "RoomsSyncNow",
+            ExistingWorkPolicy.REPLACE,
+            oneTimeRequest
+        )
+    }
+
+    fun syncTenantsImmediately(workManager: WorkManager) {
+        val oneTimeRequest = OneTimeWorkRequestBuilder<TenantsSyncWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "TenantsSyncNow",
+            ExistingWorkPolicy.REPLACE,
+            oneTimeRequest
+        )
+    }
+
+    fun syncPaymentsImmediately(workManager: WorkManager) {
+        val oneTimeRequest = OneTimeWorkRequestBuilder<PaymentsSyncWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "PaymentsSyncNow",
+            ExistingWorkPolicy.REPLACE,
+            oneTimeRequest
+        )
+    }
+
+    fun syncExpensesImmediately(workManager: WorkManager) {
+        val oneTimeRequest = OneTimeWorkRequestBuilder<ExpensesSyncWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "ExpensesSyncNow",
+            ExistingWorkPolicy.REPLACE,
+            oneTimeRequest
+        )
+    }
+
 }
 
 sealed class ChannelNames(val name: String) {

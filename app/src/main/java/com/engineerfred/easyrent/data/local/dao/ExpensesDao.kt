@@ -31,5 +31,5 @@ interface ExpensesDao {
     suspend fun getAllTrashedExpenses(userId: String): List<ExpenseEntity>
 
     @Query("SELECT * FROM expenses WHERE isDeleted = 0  AND isSynced = 0 AND userId = :userId")
-    suspend fun getAllUnsyncedExpenses(userId: String): List<ExpenseEntity>
+    suspend fun getUnsyncedExpenses(userId: String): List<ExpenseEntity>
 }

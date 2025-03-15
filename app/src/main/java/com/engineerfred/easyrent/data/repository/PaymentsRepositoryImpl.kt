@@ -109,23 +109,23 @@ class PaymentsRepositoryImpl @Inject constructor(
         emit(Resource.Error("Error fetching payments: ${it.message}"))
     }.distinctUntilChanged()
 
-    override suspend fun getUnsyncedPayments(): Resource<List<Payment>> {
+    override suspend fun getUnsyncedPayments(): List<Payment>? {
         try {
             val userId = prefs.getUserId().firstOrNull()
 
             if (userId == null) {
                 Log.i(TAG, "User not logged in || user id from prefs is null")
-                return Resource.Error("Not logged in!")
+                return null
             }
 
             Log.i(TAG, "Getting unsynced Payments from cache.....")
             val unsyncedPayments = cache.paymentsDao().getAllUnsyncedPayments(userId)
 
             Log.i(TAG, "Found ${unsyncedPayments.size} unsynced payments!!")
-            return Resource.Success(unsyncedPayments.map { it.toPayment() })
+            return unsyncedPayments.map { it.toPayment() }
         }catch (ex: Exception) {
             Log.e(TAG, "Error fetching unsynced payments: ${ex.message}")
-            return Resource.Error("Error fetching unsynced payments: ${ex.message}")
+            return null
         }
     }
 

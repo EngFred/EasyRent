@@ -10,5 +10,5 @@ interface ExpensesRepository {
     suspend fun deleteExpense(expense: Expense) : Resource<Unit>
     fun getAllExpenses(): Flow<Resource<List<Expense>>>
     suspend fun getAllTrashedExpenses(): List<Expense>
-    suspend fun getAllUnsyncedExpenses(): List<Expense>
+    suspend fun getUnsyncedExpenses(): List<Expense>?
 }

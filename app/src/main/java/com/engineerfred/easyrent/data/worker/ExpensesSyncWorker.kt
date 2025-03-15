@@ -64,7 +64,7 @@ class ExpensesSyncWorker @AssistedInject constructor(
                 deleteExpensesFromSupabaseAndUpdateCache(locallyDeletedExpenses, userId)
             }
 
-            val unsyncedExpenses = cache.expenseDao().getAllUnsyncedExpenses(userId)
+            val unsyncedExpenses = cache.expenseDao().getUnsyncedExpenses(userId)
             if ( unsyncedExpenses.isNotEmpty() ) {
                 Log.i(TAG, "Found ${unsyncedExpenses.size} unsynced expenses in cache!!")
                 addExpensesInSupabase(unsyncedExpenses)

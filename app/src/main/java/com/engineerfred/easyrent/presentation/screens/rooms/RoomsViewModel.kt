@@ -7,10 +7,12 @@ import com.engineerfred.easyrent.domain.modals.Room
 import com.engineerfred.easyrent.domain.modals.Tenant
 import com.engineerfred.easyrent.domain.usecases.rooms.DeleteRoomUseCase
 import com.engineerfred.easyrent.domain.usecases.rooms.GetRoomsUseCase
+import com.engineerfred.easyrent.domain.usecases.rooms.GetUnsyncedRoomsUseCase
 import com.engineerfred.easyrent.domain.usecases.tenants.GetTenantInRoomUseCase
 import com.engineerfred.easyrent.domain.usecases.tenants.RemoveTenantUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -22,7 +24,8 @@ class RoomsViewModel @Inject constructor(
     private val getRoomsUseCase: GetRoomsUseCase,
     private val getTenantInRoomUseCase: GetTenantInRoomUseCase,
     private val removeTenantUseCase: RemoveTenantUseCase,
-    private val deleteRoomUseCase: DeleteRoomUseCase
+    private val deleteRoomUseCase: DeleteRoomUseCase,
+    private val getUnsyncedRoomsUseCase: GetUnsyncedRoomsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoomsState())
@@ -30,6 +33,7 @@ class RoomsViewModel @Inject constructor(
 
     init {
         getRooms()
+        getUnsyncedRooms()
     }
 
     fun onEvent(event: RoomsEvents) {
@@ -163,6 +167,48 @@ class RoomsViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    private fun getUnsyncedRooms() = viewModelScope.launch(Dispatchers.IO) {
+        val result = getUnsyncedRoomsUseCase.invoke()
+        result?.let {
+            _uiState.update {
+                it.copy(
+                    unSyncedRooms = result,
+                )
+            }
+
+            if ( result.isNotEmpty() ) {
+                delay(2000)
+                _uiState.update {
+                    it.copy(
+                        showSyncRequired = true,
+                        showSyncButton = true
+                    )
+                }
+                delay(5000)
+                _uiState.update {
+                    it.copy(
+                        showSyncRequired = false
+                    )
+                }
+                delay(5000)
+                _uiState.update {
+                    it.copy(
+                        showSyncButton = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun hideSyncButton(){
+        _uiState.update {
+            it.copy(
+                showSyncButton = false,
+                showSyncRequired = false
+            )
         }
     }
 

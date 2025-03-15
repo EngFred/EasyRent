@@ -202,7 +202,7 @@ class UserRepositoryImpl @Inject constructor(
 
                     supabaseClient.from(USERS).update(
                         {
-                            set("image_url", buildImageUrl(uploadedImgUrl.path))
+                            set("image_url", buildImageUrl(uploadedImgUrl.path, "users-images" ))
                         }
                     ) {
                         filter {
@@ -211,9 +211,9 @@ class UserRepositoryImpl @Inject constructor(
                     }
 
                     Log.i(TAG, "Profile image updated successfully in supabase! Updating in cache...")
-                    cache.userInfoDao().updateUserProfileImage(userId, buildImageUrl(uploadedImgUrl.path))
+                    cache.userInfoDao().updateUserProfileImage(userId, buildImageUrl(uploadedImgUrl.path, "users-images"))
 
-                    Log.i(TAG, "Profile image updated successfully! Image path: ${buildImageUrl(uploadedImgUrl.path)}")
+                    Log.i(TAG, "Profile image updated successfully! Image path: ${buildImageUrl(uploadedImgUrl.path, "users-images")}")
                     return@withContext Resource.Success(Unit)
                 }
             }

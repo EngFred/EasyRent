@@ -18,5 +18,9 @@ data class ExpensesUiState(
     val totalExpenses: String = "",
     val isInserting: Boolean = false,
     val insertionErr: String? = null,
-    val insertSuccess: Boolean = false
+    val insertSuccess: Boolean = false,
+
+    val unSyncedExpenses: List<Expense> = emptyList(),
+    val showSyncButton: Boolean = false,
+    val showSyncRequired: Boolean = false
 )

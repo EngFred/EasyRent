@@ -1,6 +1,7 @@
 package com.engineerfred.easyrent.presentation.screens.payments
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,10 +17,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddCircle
+import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -27,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -42,12 +46,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.work.WorkManager
+import com.engineerfred.easyrent.presentation.common.CustomSyncToast
 import com.engineerfred.easyrent.presentation.screens.payments.component.PaymentItem
 import com.engineerfred.easyrent.presentation.theme.LightSkyBlue
 import com.engineerfred.easyrent.presentation.theme.MyError
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySecondary
 import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.presentation.theme.MyTertiary
+import com.engineerfred.easyrent.util.WorkerUtils
 import com.engineerfred.easyrent.util.formatCurrency
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +63,8 @@ import com.engineerfred.easyrent.util.formatCurrency
 fun Payments(
     onAddPayment: () -> Unit,
     onBackClicked: () -> Unit,
-    paymentsViewModel: PaymentsViewModel = hiltViewModel()
+    paymentsViewModel: PaymentsViewModel = hiltViewModel(),
+    workManager: WorkManager
 ) {
 
     val uiState = paymentsViewModel.uiState.collectAsState().value
@@ -64,6 +73,12 @@ fun Payments(
     LaunchedEffect(uiState.deletingPaymentErr) {
         if(uiState.deletingPaymentErr != null ) {
             Toast.makeText(context, uiState.deletingPaymentErr, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            paymentsViewModel.hideSyncButton()
         }
     }
 
@@ -94,6 +109,25 @@ fun Payments(
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            AnimatedVisibility(visible= uiState.showSyncButton) {
+                FloatingActionButton(
+                    modifier = Modifier.padding(bottom = 45.dp, end = 20.dp),
+                    onClick = {
+                        WorkerUtils.syncPaymentsImmediately(workManager)
+                        paymentsViewModel.hideSyncButton()
+                    },
+                    containerColor = MyPrimary
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CloudSync,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
         }
     ) { innerPadding ->
 
@@ -188,6 +222,11 @@ fun Payments(
                                         }
                                     }
                                 }
+                                CustomSyncToast(
+                                    showSyncRequired = uiState.showSyncRequired,
+                                    dataCount = uiState.unSyncedPayments.size,
+                                    dataName = "payment"
+                                )
                                 Box(Modifier
                                     .fillMaxWidth().padding(vertical = 24.dp, horizontal = 60.dp)
                                     .align(Alignment.BottomCenter), contentAlignment = Alignment.Center){

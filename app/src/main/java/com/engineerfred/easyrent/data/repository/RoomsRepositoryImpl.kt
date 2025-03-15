@@ -1,16 +1,19 @@
 package com.engineerfred.easyrent.data.repository
 
+import android.content.Context
 import android.util.Log
 import com.engineerfred.easyrent.constants.Constants.ROOMS
 import com.engineerfred.easyrent.data.local.db.CacheDatabase
 import com.engineerfred.easyrent.data.mappers.toRoom
 import com.engineerfred.easyrent.data.mappers.toRoomDTO
+import com.engineerfred.easyrent.data.mappers.toRoomDto
 import com.engineerfred.easyrent.data.mappers.toRoomEntity
 import com.engineerfred.easyrent.data.remote.dto.RoomDto
 import com.engineerfred.easyrent.data.resource.Resource
 import com.engineerfred.easyrent.domain.modals.Room
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.domain.repository.RoomsRepository
+import com.engineerfred.easyrent.util.NetworkUtils
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
@@ -237,4 +240,61 @@ class RoomsRepositoryImpl @Inject constructor(
     }.flowOn(Dispatchers.IO)
         .catch { e -> emit(Resource.Error(e.message ?: "Error fetching room by id!") )}
 
+    override suspend fun getUnsyncedRooms(): List<Room>? {
+        try {
+            val userId = prefs.getUserId().firstOrNull()
+
+            if ( userId == null ) {
+                Log.e(TAG, "User ID is null!")
+                return null
+            }
+
+            val unsyncedRooms = cache.roomsDao().getUnsyncedRooms(userId)
+            return unsyncedRooms.map { it.toRoom() }
+
+        }catch (ex: Exception) {
+            Log.e(TAG, "Error getting unsynced rooms: ${ex.message}")
+            return null
+        }
+    }
+
+    //NOT USED THOUGH
+    override suspend fun syncRoomsNow(context: Context): Resource<Unit> {
+        try {
+
+            val userId = prefs.getUserId().firstOrNull()
+
+            if ( userId == null ) {
+                Log.e(TAG, "User ID is null!")
+                return Resource.Error("Not logged in!")
+            }
+
+            if (!NetworkUtils.isInternetAvailable(context)) {
+                Log.e(TAG, "No internet connection!")
+                return Resource.Error("No internet connection!")
+            }
+
+            val unsyncedRooms = cache.roomsDao().getUnsyncedRooms(userId)
+
+            if ( unsyncedRooms.isNotEmpty() ) {
+                Log.i(TAG, "Syncing ${unsyncedRooms.size} rooms with Supabase....")
+                val remoteRooms = supabaseClient.from(ROOMS)
+                    .upsert(unsyncedRooms.map { it.copy(isSynced = true).toRoomDto() }){
+                        select()
+                    }.decodeList<RoomDto>()
+
+                Log.i(TAG, "Synced ${remoteRooms.size} rooms with Supabase successfully!")
+                cache.roomsDao().upsertRooms(remoteRooms.map { it.toRoomEntity() })
+
+                Log.i(TAG, "Rooms synced successfully!")
+                return Resource.Success(Unit)
+            }
+
+            return Resource.Success(Unit)
+
+        }catch (e: Exception) {
+            Log.e(TAG, "Error syncing rooms: ${e.message}")
+            return Resource.Error("Error syncing rooms!")
+        }
+    }
 }

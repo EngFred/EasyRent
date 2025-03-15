@@ -13,6 +13,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import androidx.work.WorkManager
 import com.engineerfred.easyrent.presentation.screens.add_payment.AddPayment
 import com.engineerfred.easyrent.presentation.screens.add_room.AddRoomScreen
 import com.engineerfred.easyrent.presentation.screens.add_tenant.AddTenantScreen
@@ -24,13 +25,16 @@ import com.engineerfred.easyrent.presentation.screens.tenants.Tenants
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.mainGraph(
-    navController: NavHostController
+    navController: NavHostController,
+    workManager: WorkManager,
 ) {
 
     navigation(
         startDestination = MainScreens.RoomsList.dest,
         route = Graphs.MAIN_GRAPH
     ) {
+
+        //rooms
         composable(
             route = MainScreens.RoomsList.dest,
             enterTransition = {
@@ -76,10 +80,12 @@ fun NavGraphBuilder.mainGraph(
                     navController.navigate(MainScreens.TenantDetails.createRoute(tenantId = null, roomId = createdRoomId, monthlyRent = monthlyRent, roomNumber = roomNumber )) {
                         launchSingleTop = true
                     }
-                }
+                },
+                workManager = workManager
             )
         }
 
+        //room upsert
         composable(
             route = MainScreens.RoomDetails.dest,
             arguments = listOf(
@@ -104,6 +110,7 @@ fun NavGraphBuilder.mainGraph(
             )
         }
 
+        //tenant upsert
         composable(
             route = MainScreens.TenantDetails.dest,
             arguments = listOf(
@@ -158,6 +165,7 @@ fun NavGraphBuilder.mainGraph(
             )
         }
 
+        //payments
         composable(
             route = MainScreens.Payments.dest,
         ) {
@@ -167,18 +175,22 @@ fun NavGraphBuilder.mainGraph(
                 },
                 onBackClicked = {
                     navController.navigateUp()
-                }
+                },
+                workManager = workManager
             )
         }
 
+        //expenses
         composable(
             route = MainScreens.Expenses.dest
         ) {
             ExpensesScreen(
-                onBack = { navController.navigateUp() }
+                onBack = { navController.navigateUp() },
+                workManager = workManager
             )
         }
 
+        //tenants
         composable(
             route = MainScreens.Tenants.dest
         ) {
@@ -188,10 +200,12 @@ fun NavGraphBuilder.mainGraph(
                 },
                 onBackClicked = {
                     navController.navigateUp()
-                }
+                },
+                workManager  = workManager
             )
         }
 
+        //profile
         composable(
             route = MainScreens.Profile.dest
         ) {

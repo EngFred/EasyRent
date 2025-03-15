@@ -38,7 +38,7 @@ interface TenantsDao {
     @Query("DELETE FROM TENANTS WHERE id = :tenantId")
     suspend fun deleteTenant(tenantId: String)
 
-    @Query("SELECT * FROM TENANTS WHERE isSynced = 0 AND isDeleted = 0")
+    @Query("SELECT * FROM TENANTS WHERE isSynced = 0 AND isDeleted = 0 AND isDeleted = 0")
     suspend fun getUnsyncedTenants(): List<TenantEntity>
 
     @Query("SELECT * FROM TENANTS WHERE isDeleted = 1")

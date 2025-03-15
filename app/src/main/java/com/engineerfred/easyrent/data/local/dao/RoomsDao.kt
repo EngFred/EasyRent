@@ -36,7 +36,7 @@ interface RoomsDao {
     @Upsert
     suspend fun upsertRooms(remoteRooms: List<RoomEntity> )
 
-    @Query("SELECT * FROM ROOMS WHERE isSynced = 0 AND userId = :userId")
+    @Query("SELECT * FROM ROOMS WHERE isSynced = 0 AND isDeleted = 0 AND userId = :userId")
     suspend fun getUnsyncedRooms(userId: String): List<RoomEntity>
 
     @Query("SELECT * FROM ROOMS WHERE isDeleted = 1 AND userId = :userId")

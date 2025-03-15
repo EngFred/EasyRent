@@ -270,6 +270,26 @@ class TenantsRepositoryImpl @Inject constructor(
         emit(Resource.Error("Error fetching tenants: ${it.message}"))
     }.distinctUntilChanged()
 
+    override suspend fun getUnsyncedTenants(): List<Tenant>? {
+        try {
+            val userId = prefs.getUserId().firstOrNull()
+
+            if (userId == null) {
+                Log.i(TAG, "User not logged in || user id from prefs is null")
+                return null
+            }
+
+            Log.i(TAG, "Getting unsynced tenants from cache.....")
+            val unsyncedTenants = cache.tenantsDao().getUnsyncedTenants()
+
+            Log.i(TAG, "Found ${unsyncedTenants.size} unsynced tenants!!")
+            return unsyncedTenants.map { it.toTenant() }
+        }catch (ex: Exception) {
+            Log.e(TAG, "Error fetching unsynced tenants: ${ex.message}")
+            return null
+        }
+    }
+
     private suspend fun uploadImage(contentResolver: ContentResolver, tenant: Tenant, userId: String) : String {
         Log.i(TAG, "Uploading image...")
         return withContext(NonCancellable) {
@@ -287,8 +307,8 @@ class TenantsRepositoryImpl @Inject constructor(
                     upsert = true
                     contentType = ContentType.Image.PNG
                 }
-                Log.i(TAG, "Upload successfully! Image path: ${buildImageUrl(uploadedImgUrl.path)}")
-                buildImageUrl(uploadedImgUrl.path)
+
+                buildImageUrl(uploadedImgUrl.path, "tenants-images")
             }catch (ex: Exception) {
                 Log.e(TAG, "Upload failed! Error: $ex")
                 throw ex

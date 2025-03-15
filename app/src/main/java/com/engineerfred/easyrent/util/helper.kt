@@ -70,6 +70,6 @@ fun getCurrentMonthAndYear() : String {
     return "${currentDate.month.name}, ${currentDate.year}"
 }
 
-fun buildImageUrl(imageFileName: String) =
-    "$SUPABASE_URL/storage/v1/object/users-images/${imageFileName}"
+fun buildImageUrl(imageFileName: String, bucketName: String) =
+    "$SUPABASE_URL/storage/v1/object/${bucketName}/${imageFileName}"
 

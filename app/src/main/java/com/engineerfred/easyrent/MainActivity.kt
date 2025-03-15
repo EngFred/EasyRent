@@ -75,7 +75,8 @@ class MainActivity : ComponentActivity() {
                      if (userId != "") {
                          RootGraph(
                              userId = userId,
-                             navController = navController
+                             navController = navController,
+                             workManager = workManager
                          )
                     }
                 }

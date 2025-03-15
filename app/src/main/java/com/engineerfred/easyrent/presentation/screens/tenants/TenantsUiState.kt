@@ -9,4 +9,8 @@ data class TenantsUiState(
     val deletingTenant: Boolean = false,
     val deletingTenantErr: String? = null,
     val deleteSuccessful: Boolean = false,
+
+    val unSyncedTenants: List<Tenant> = emptyList(),
+    val showSyncButton: Boolean = false,
+    val showSyncRequired: Boolean = false
 )

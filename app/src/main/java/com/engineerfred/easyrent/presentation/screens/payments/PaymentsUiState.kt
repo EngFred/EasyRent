@@ -8,5 +8,9 @@ data class PaymentsUiState(
     val deletingPaymentErr: String? = null,
     val deletingPayment: Boolean = false,
     val deletedPaymentId: String? = null,
-    val payments: List<Payment> = emptyList()
+    val payments: List<Payment> = emptyList(),
+    val unSyncedPayments: List<Payment> = emptyList(),
+
+    val showSyncButton: Boolean = false,
+    val showSyncRequired: Boolean = false
 )

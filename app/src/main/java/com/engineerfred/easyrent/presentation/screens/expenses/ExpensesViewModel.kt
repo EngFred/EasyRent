@@ -6,9 +6,11 @@ import com.engineerfred.easyrent.data.resource.Resource
 import com.engineerfred.easyrent.domain.modals.Expense
 import com.engineerfred.easyrent.domain.usecases.expenses.DeleteExpenseUseCase
 import com.engineerfred.easyrent.domain.usecases.expenses.GetAllUserExpensesUseCase
+import com.engineerfred.easyrent.domain.usecases.expenses.GetUnsyncedExpensesUseCase
 import com.engineerfred.easyrent.domain.usecases.expenses.InsertExpenseUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -19,7 +21,8 @@ import javax.inject.Inject
 class ExpensesViewModel @Inject constructor(
     private val insertExpenseUseCase: InsertExpenseUseCase,
     private val getAllUserExpensesUseCase: GetAllUserExpensesUseCase,
-    private val deleteExpenseUseCase: DeleteExpenseUseCase
+    private val deleteExpenseUseCase: DeleteExpenseUseCase,
+    private val getUnsyncedExpensesUseCase: GetUnsyncedExpensesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExpensesUiState())
@@ -27,6 +30,7 @@ class ExpensesViewModel @Inject constructor(
 
     init {
         getUserExpenses()
+        getUnsyncedExpenses()
     }
 
     fun onEvent(event: ExpensesUiEvents) {
@@ -151,4 +155,48 @@ class ExpensesViewModel @Inject constructor(
         }
     }
 
+
+    private fun getUnsyncedExpenses() = viewModelScope.launch( Dispatchers.IO ) {
+        val result = getUnsyncedExpensesUseCase.invoke()
+
+        result?.let {
+
+            _uiState.update {
+                it.copy(
+                    unSyncedExpenses = result
+                )
+            }
+
+            if ( result.isNotEmpty() ) {
+                delay(2000)
+                _uiState.update {
+                    it.copy(
+                        showSyncRequired = true,
+                        showSyncButton = true
+                    )
+                }
+                delay(5000)
+                _uiState.update {
+                    it.copy(
+                        showSyncRequired = false
+                    )
+                }
+                delay(5000)
+                _uiState.update {
+                    it.copy(
+                        showSyncButton = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun hideSyncButton(){
+        _uiState.update {
+            it.copy(
+                showSyncButton = false,
+                showSyncRequired = false
+            )
+        }
+    }
 }

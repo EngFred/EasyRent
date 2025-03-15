@@ -6,6 +6,7 @@ import com.engineerfred.easyrent.domain.modals.Tenant
 data class RoomsState(
     val loading: Boolean = true,
     val rooms: List<Room> = emptyList(),
+    val unSyncedRooms: List<Room> = emptyList(),
     val error: String? = null,
     val roomId: String? = null,
     val tenant: Tenant? = null,
@@ -16,5 +17,8 @@ data class RoomsState(
 
     val deletingRoom: Boolean = false,
     val deletedRoomId: String? = null,
-    val deletingRoomErr: String? = null
+    val deletingRoomErr: String? = null,
+
+    val showSyncButton: Boolean = false,
+    val showSyncRequired: Boolean = false
 )

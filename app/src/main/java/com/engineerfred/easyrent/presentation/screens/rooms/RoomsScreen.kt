@@ -1,26 +1,29 @@
 package com.engineerfred.easyrent.presentation.screens.rooms
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -29,9 +32,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -45,6 +53,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.work.WorkManager
+import com.engineerfred.easyrent.presentation.common.CustomSyncToast
 import com.engineerfred.easyrent.presentation.screens.rooms.components.DrawerContent
 import com.engineerfred.easyrent.presentation.screens.rooms.components.RoomItem
 import com.engineerfred.easyrent.presentation.theme.MyError
@@ -52,7 +62,9 @@ import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySecondary
 import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.presentation.theme.MyTertiary
+import com.engineerfred.easyrent.util.WorkerUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +76,7 @@ fun RoomsScreen(
     onExpensesClicked: () -> Unit,
     onTenantsClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
+    workManager: WorkManager,
     onAddTenant: (roomId: String, monthlyRent: String, roomNumber: String) -> Unit,
     roomsViewModel: RoomsViewModel = hiltViewModel()
 ) {
@@ -82,6 +95,12 @@ fun RoomsScreen(
     LaunchedEffect(uiState.deletingTenantErr) {
         if ( uiState.deletingTenantErr != null ) {
             Toast.makeText(context, uiState.deletingTenantErr, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            roomsViewModel.hideSyncButton()
         }
     }
 
@@ -134,13 +153,49 @@ fun RoomsScreen(
             },
 
             floatingActionButton = {
-                FloatingActionButton(
+                Column(
                     modifier = Modifier.padding(bottom = 36.dp, end = 20.dp),
-                    onClick = onAddRoom,
-                    shape = CircleShape,
-                    containerColor = MyPrimary
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(imageVector = Icons.Rounded.Add, contentDescription = null, tint = Color.White)
+                    AnimatedVisibility(visible = uiState.showSyncButton ) {
+                        IconButton(
+                            onClick = {
+                                WorkerUtils.syncRoomsImmediately(workManager)
+                                roomsViewModel.hideSyncButton()
+                            },
+                            modifier = Modifier.size(60.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MyPrimary,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CloudSync,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(30.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.size(10.dp))
+                    IconButton(
+                        onClick = {
+                            onAddRoom()
+                        },
+                        modifier = Modifier.size(60.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MyPrimary,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
                 }
             }
         ) { innerPadding ->
@@ -222,6 +277,11 @@ fun RoomsScreen(
                                             )
                                         }
                                     }
+                                    CustomSyncToast(
+                                        showSyncRequired = uiState.showSyncRequired,
+                                        dataCount = uiState.unSyncedRooms.size,
+                                        dataName = "room"
+                                    )
                                     Box(Modifier
                                         .fillMaxWidth().padding(bottom = 16.dp)
                                         .align(Alignment.BottomCenter), contentAlignment = Alignment.Center){

@@ -1,5 +1,6 @@
 package com.engineerfred.easyrent.presentation.screens.expenses
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,11 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,10 +33,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -43,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -62,10 +65,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.work.WorkManager
 import com.engineerfred.easyrent.domain.modals.Expense
 import com.engineerfred.easyrent.domain.modals.ExpenseCategory
-import com.engineerfred.easyrent.presentation.common.CustomTextField
 import com.engineerfred.easyrent.presentation.common.CustomAlertDialog
+import com.engineerfred.easyrent.presentation.common.CustomSyncToast
+import com.engineerfred.easyrent.presentation.common.CustomTextField
 import com.engineerfred.easyrent.presentation.theme.LightSkyBlue
 import com.engineerfred.easyrent.presentation.theme.MyCardBg
 import com.engineerfred.easyrent.presentation.theme.MyError
@@ -73,13 +78,15 @@ import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySecondary
 import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.presentation.theme.MyTertiary
+import com.engineerfred.easyrent.util.WorkerUtils
 import com.engineerfred.easyrent.util.formatCurrency
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesScreen(
     viewModel: ExpensesViewModel = hiltViewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    workManager: WorkManager
 ) {
     val uiState = viewModel.uiState.collectAsState().value
 
@@ -91,15 +98,57 @@ fun ExpensesScreen(
         }
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.hideSyncButton()
+        }
+    }
+
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddExpenseDialog = true },
-                modifier = Modifier.padding(16.dp),
-                containerColor = MyPrimary,
-                contentColor = Color.White
+            Column(
+                modifier = Modifier.padding(bottom = 36.dp, end = 20.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Expense")
+                AnimatedVisibility(visible = uiState.showSyncButton ) {
+                    IconButton(
+                        onClick = {
+                            WorkerUtils.syncExpensesImmediately(workManager)
+                            viewModel.hideSyncButton()
+                        },
+                        modifier = Modifier.size(60.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MyPrimary,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.CloudSync,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.size(10.dp))
+                IconButton(
+                    onClick = {
+                        showAddExpenseDialog = true
+                    },
+                    modifier = Modifier.size(60.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MyPrimary,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
             }
         },
         topBar = {
@@ -135,7 +184,7 @@ fun ExpensesScreen(
                     LinearProgressIndicator(modifier = Modifier.width(100.dp), color = Color.White)
                 }
 
-                uiState.isFetching.not() && uiState.fetchErr != null -> {
+                uiState.fetchErr != null -> {
                     ErrorMessage(
                         errorMessage = uiState.fetchErr,
                         onRetry = {
@@ -200,6 +249,11 @@ fun ExpensesScreen(
                                         Text(fontWeight = FontWeight.Bold, text = "UGX.${formatCurrency(totalAmount.toFloat())}", color = MySurface)
                                     }
                                 }
+                                CustomSyncToast(
+                                    showSyncRequired = uiState.showSyncRequired,
+                                    dataCount = uiState.unSyncedExpenses.size,
+                                    dataName = "expense"
+                                )
                             }
                         }
                     }

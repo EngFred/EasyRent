@@ -217,8 +217,7 @@ class AuthRepositoryImpl @Inject constructor(
                     contentType = ContentType.Image.PNG
                 }
 
-                Log.i(TAG, "Upload successfully! Image path: ${buildImageUrl(uploadedImgUrl.path)}")
-                buildImageUrl(uploadedImgUrl.path)
+                buildImageUrl(uploadedImgUrl.path, "users-images")
             }catch (ex: Exception) {
                 throw ex
             }

@@ -7,7 +7,6 @@ import com.engineerfred.easyrent.data.mappers.toExpense
 import com.engineerfred.easyrent.data.mappers.toExpenseDTO
 import com.engineerfred.easyrent.data.mappers.toExpenseEntity
 import com.engineerfred.easyrent.data.remote.dto.ExpenseDto
-import com.engineerfred.easyrent.data.repository.PaymentsRepositoryImpl.Companion
 import com.engineerfred.easyrent.data.resource.Resource
 import com.engineerfred.easyrent.domain.modals.Expense
 import com.engineerfred.easyrent.domain.repository.ExpensesRepository
@@ -175,17 +174,15 @@ class ExpensesRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getAllUnsyncedExpenses(): List<Expense> {
+    override suspend fun getUnsyncedExpenses(): List<Expense>? {
         try {
-            val userID = prefsRepo.getUserId().firstOrNull()
-            if ( userID != null ) {
-                val unsyncedExpenses = expensesDao.getAllUnsyncedExpenses(userID)
-                return unsyncedExpenses.map { it.toExpense() }
-            } else {
-                return emptyList()
-            }
+            val userId = prefsRepo.getUserId().firstOrNull() ?: return null
+
+            val unsyncedExpenses = expensesDao.getUnsyncedExpenses(userId)
+            return unsyncedExpenses.map { it.toExpense() }
+
         } catch (ex: Exception ){
-            return emptyList()
+            return null
         }
     }
 }
