@@ -24,7 +24,6 @@ import com.engineerfred.easyrent.data.worker.RoomsSyncWorker
 import com.engineerfred.easyrent.data.worker.TenantsSyncWorker
 import com.engineerfred.easyrent.data.worker.UnpaidTenantsWorker
 import java.io.IOException
-import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -68,36 +67,6 @@ object WorkerUtils {
         return ex is IOException || ex is TimeoutException
     }
 
-
-    private fun scheduleEndOfMonthWorker(workerManager: WorkManager) {
-        val calendar = Calendar.getInstance()
-
-        // Move to the first day of next month
-        calendar.add(Calendar.MONTH, 1)
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-
-        // Move back one day to get the last day of the current month
-        calendar.add(Calendar.DAY_OF_MONTH, -1)
-
-        // Set execution time (e.g., 2 AM)
-        calendar.set(Calendar.HOUR_OF_DAY, 2)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-
-        val delay = calendar.timeInMillis - System.currentTimeMillis()
-
-        val workRequest = OneTimeWorkRequestBuilder<EndOfMonthBalanceSyncWorker>()
-            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-            .build()
-
-        workerManager.enqueueUniqueWork(
-            "EndOfMonthBalanceSyncWorker",
-            ExistingWorkPolicy.REPLACE,
-            workRequest
-        )
-    }
-
-
     @RequiresApi(Build.VERSION_CODES.O)
     fun scheduleSyncWorkers(workManager: WorkManager) {
 
@@ -107,7 +76,8 @@ object WorkerUtils {
         val roomsSyncRequest = PeriodicWorkRequestBuilder<RoomsSyncWorker>(15, TimeUnit.MINUTES).setConstraints(constraints).build()
         val paymentsSyncRequest = PeriodicWorkRequestBuilder<PaymentsSyncWorker>(15, TimeUnit.MINUTES).setConstraints(constraints).build()
         val expensesSyncRequest = PeriodicWorkRequestBuilder<ExpensesSyncWorker>(15, TimeUnit.MINUTES).setConstraints(constraints).build()
-        val unpaidTenantsRequest = PeriodicWorkRequestBuilder<UnpaidTenantsWorker>(24, TimeUnit.HOURS).build()
+        val unpaidTenantsRequest = PeriodicWorkRequestBuilder<UnpaidTenantsWorker>(1, TimeUnit.DAYS).build()
+        val endOfMonthBalanceSyncWorker = PeriodicWorkRequestBuilder<EndOfMonthBalanceSyncWorker>(1, TimeUnit.DAYS).build()
 
         workManager.enqueueUniquePeriodicWork(
             "TenantsSyncWorker",
@@ -127,12 +97,16 @@ object WorkerUtils {
             expensesSyncRequest
         )
 
-        scheduleEndOfMonthWorker(workManager)
-
         workManager.enqueueUniquePeriodicWork(
             "UnpaidTenantsWorker",
             ExistingPeriodicWorkPolicy.KEEP,
             unpaidTenantsRequest
+        )
+
+        workManager.enqueueUniquePeriodicWork(
+            "endOfMonthBalanceSyncWorker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            endOfMonthBalanceSyncWorker
         )
 
         workManager.enqueueUniquePeriodicWork(

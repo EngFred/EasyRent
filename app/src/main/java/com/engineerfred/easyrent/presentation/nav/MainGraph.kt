@@ -1,9 +1,12 @@
 package com.engineerfred.easyrent.presentation.nav
 
+import android.net.Uri
 import android.os.Build
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -18,6 +21,7 @@ import com.engineerfred.easyrent.presentation.screens.add_payment.AddPayment
 import com.engineerfred.easyrent.presentation.screens.add_room.AddRoomScreen
 import com.engineerfred.easyrent.presentation.screens.add_tenant.AddTenantScreen
 import com.engineerfred.easyrent.presentation.screens.expenses.ExpensesScreen
+import com.engineerfred.easyrent.presentation.screens.image_view.ImageViewScreen
 import com.engineerfred.easyrent.presentation.screens.payments.Payments
 import com.engineerfred.easyrent.presentation.screens.profile.Profile
 import com.engineerfred.easyrent.presentation.screens.rooms.RoomsScreen
@@ -30,13 +34,13 @@ fun NavGraphBuilder.mainGraph(
 ) {
 
     navigation(
-        startDestination = MainScreens.RoomsList.dest,
+        startDestination = MainGraphDestinations.RoomsList.dest,
         route = Graphs.MAIN_GRAPH
     ) {
 
         //rooms
         composable(
-            route = MainScreens.RoomsList.dest,
+            route = MainGraphDestinations.RoomsList.dest,
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { -it },
@@ -46,38 +50,38 @@ fun NavGraphBuilder.mainGraph(
             exitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { -it },
-                    animationSpec = tween(durationMillis = 300)
+                    animationSpec = tween(durationMillis = 500)
                 )
             },
         ) {
             RoomsScreen(
                 onAddRoom = {
-                    navController.navigate(MainScreens.RoomDetails.createRoute(null)) {
+                    navController.navigate(MainGraphDestinations.RoomDetails.createRoute(null)) {
                         launchSingleTop = true
                     }
                 },
                 onPaymentsClicked = {
-                    navController.navigate(MainScreens.Payments.dest) {
+                    navController.navigate(MainGraphDestinations.Payments.dest) {
                         launchSingleTop = true
                     }
                 },
                 onExpensesClicked = {
-                    navController.navigate(MainScreens.Expenses.dest) {
+                    navController.navigate(MainGraphDestinations.Expenses.dest) {
                         launchSingleTop = true
                     }
                 },
                 onTenantsClicked = {
-                    navController.navigate(MainScreens.Tenants.dest) {
+                    navController.navigate(MainGraphDestinations.Tenants.dest) {
                         launchSingleTop = true
                     }
                 },
                 onSettingsClicked = {
-                    navController.navigate(MainScreens.Profile.dest) {
+                    navController.navigate(MainGraphDestinations.Profile.dest) {
                         launchSingleTop = true
                     }
                 },
                 onAddTenant = { createdRoomId, monthlyRent, roomNumber ->
-                    navController.navigate(MainScreens.TenantDetails.createRoute(tenantId = null, roomId = createdRoomId, monthlyRent = monthlyRent, roomNumber = roomNumber )) {
+                    navController.navigate(MainGraphDestinations.TenantDetails.createRoute(tenantId = null, roomId = createdRoomId, monthlyRent = monthlyRent, roomNumber = roomNumber )) {
                         launchSingleTop = true
                     }
                 },
@@ -87,7 +91,7 @@ fun NavGraphBuilder.mainGraph(
 
         //room upsert
         composable(
-            route = MainScreens.RoomDetails.dest,
+            route = MainGraphDestinations.RoomDetails.dest,
             arguments = listOf(
                 navArgument("roomId") {
                     type = NavType.StringType
@@ -99,7 +103,7 @@ fun NavGraphBuilder.mainGraph(
             AddRoomScreen(
                 roomId = roomId,
                 onAddTenant = { createdRoomId, monthlyRent, roomNumber ->
-                    navController.navigate(MainScreens.TenantDetails.createRoute(tenantId = null, roomId = createdRoomId, monthlyRent = monthlyRent, roomNumber = roomNumber ))
+                    navController.navigate(MainGraphDestinations.TenantDetails.createRoute(tenantId = null, roomId = createdRoomId, monthlyRent = monthlyRent, roomNumber = roomNumber ))
                 },
                 onCancel = {
                     navController.navigateUp()
@@ -112,7 +116,7 @@ fun NavGraphBuilder.mainGraph(
 
         //tenant upsert
         composable(
-            route = MainScreens.TenantDetails.dest,
+            route = MainGraphDestinations.TenantDetails.dest,
             arguments = listOf(
                 navArgument("tenantId") {
                     type = NavType.StringType
@@ -134,13 +138,7 @@ fun NavGraphBuilder.mainGraph(
             enterTransition = {
                 slideInVertically(
                     initialOffsetY = { -it },
-                    animationSpec = tween(durationMillis = 300)
-                )
-            },
-            exitTransition = {
-                slideOutVertically(
-                    targetOffsetY = { -it },
-                    animationSpec = tween(durationMillis = 300)
+                    animationSpec = tween(durationMillis = 500)
                 )
             },
         ) { navBackStackEntry ->
@@ -155,8 +153,8 @@ fun NavGraphBuilder.mainGraph(
                 monthlyRent = monthlyRent,
                 roomNumber = roomNumber,
                 onSaveSuccessFromRoom = {
-                    navController.navigate(MainScreens.RoomsList.dest){
-                        popUpTo(MainScreens.RoomsList.dest){ inclusive = true }
+                    navController.navigate(MainGraphDestinations.RoomsList.dest){
+                        popUpTo(MainGraphDestinations.RoomsList.dest){ inclusive = true }
                     }
                 },
                 onSaveSuccessFromTenants = {
@@ -167,11 +165,11 @@ fun NavGraphBuilder.mainGraph(
 
         //payments
         composable(
-            route = MainScreens.Payments.dest,
+            route = MainGraphDestinations.Payments.dest,
         ) {
             Payments(
                 onAddPayment = {
-                    navController.navigate(MainScreens.AddPayment.dest)
+                    navController.navigate(MainGraphDestinations.AddPayment.dest)
                 },
                 onBackClicked = {
                     navController.navigateUp()
@@ -182,7 +180,7 @@ fun NavGraphBuilder.mainGraph(
 
         //expenses
         composable(
-            route = MainScreens.Expenses.dest
+            route = MainGraphDestinations.Expenses.dest
         ) {
             ExpensesScreen(
                 onBack = { navController.navigateUp() },
@@ -192,38 +190,48 @@ fun NavGraphBuilder.mainGraph(
 
         //tenants
         composable(
-            route = MainScreens.Tenants.dest
+            route = MainGraphDestinations.Tenants.dest
         ) {
             Tenants(
                 onAddTenant = {
-                    navController.navigate(MainScreens.TenantDetails.createRoute(tenantId = null, roomId = null, monthlyRent = null, roomNumber = null ))
+                    navController.navigate(MainGraphDestinations.TenantDetails.createRoute(tenantId = null, roomId = null, monthlyRent = null, roomNumber = null ))
                 },
                 onBackClicked = {
                     navController.navigateUp()
                 },
-                workManager  = workManager
+                workManager  = workManager,
+                onImageClicked = {
+                    val imageUrl = Uri.encode(it)
+                    navController.navigate(MainGraphDestinations.ImageView.createRoute(imageUrl)) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 
         //profile
         composable(
-            route = MainScreens.Profile.dest
+            route = MainGraphDestinations.Profile.dest
         ) {
             Profile(
                 onSignOutSuccess = {
                     navController.navigate(Graphs.AUTH_GRAPH){
-                        popUpTo(0) { inclusive = true } // Clears the entire back stack
-                        launchSingleTop = true // Ensures a fresh start of AUTH_GRAPH
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 onBack = {
                     navController.navigateUp()
+                },
+                onImageClicked = {
+                    val imageUrl = Uri.encode(it)
+                    navController.navigate(MainGraphDestinations.ImageView.createRoute(imageUrl))
                 }
             )
         }
 
         composable(
-            route = MainScreens.AddPayment.dest,
+            route = MainGraphDestinations.AddPayment.dest,
             enterTransition = {
                 slideInVertically(
                     initialOffsetY = { it },
@@ -233,7 +241,7 @@ fun NavGraphBuilder.mainGraph(
             exitTransition = {
                 slideOutVertically(
                     targetOffsetY = { it },
-                    animationSpec = tween(durationMillis = 300)
+                    animationSpec = tween(durationMillis = 500)
                 )
             },
         ) {
@@ -242,6 +250,34 @@ fun NavGraphBuilder.mainGraph(
                     navController.navigateUp()
                 }
             )
+        }
+
+        //image view screen
+        composable(
+            route = MainGraphDestinations.ImageView.dest,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(durationMillis = 600)
+                )
+            },
+            arguments = listOf(
+                navArgument("imageUrl") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val encodedImageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
+            val decodedImageUrl = Uri.decode(encodedImageUrl)
+            ImageViewScreen(imageUrl = decodedImageUrl, onBack = {
+                navController.navigateUp()
+            })
         }
     }
 }

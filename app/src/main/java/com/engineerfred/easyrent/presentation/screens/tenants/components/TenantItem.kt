@@ -56,6 +56,7 @@ import com.engineerfred.easyrent.util.toFormattedDate
 fun TenantItem(
     tenant: Tenant,
     onDelete: (tenant: Tenant) -> Unit,
+    onImageClicked: (String) -> Unit,
     deletingTenant: () -> Boolean,
     deletedTenantId: String
 ) {
@@ -87,6 +88,7 @@ fun TenantItem(
                             model = tenant.profilePic,
                             contentDescription = "${tenant.name}'s profile picture",
                             modifier = Modifier
+                                .clickable { onImageClicked(tenant.profilePic) }
                                 .size(70.dp)
                                 .clip(CircleShape)
                                 .border(2.dp, MyPrimary, CircleShape), // Added border

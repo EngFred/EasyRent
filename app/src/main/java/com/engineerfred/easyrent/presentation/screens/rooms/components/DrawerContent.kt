@@ -1,14 +1,19 @@
 package com.engineerfred.easyrent.presentation.screens.rooms.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.MonetizationOn
@@ -17,19 +22,25 @@ import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.Person2
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.engineerfred.easyrent.R
+import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySecondary
 import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.presentation.theme.MyTertiary
@@ -40,11 +51,12 @@ fun DrawerContent(
     onPaymentsClicked: () -> Unit,
     onExpensesClicked: () -> Unit,
     onTenantsClicked: () -> Unit,
-    onProfileClicked: () -> Unit,
+    onProfileClicked: () -> Unit
 ) {
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
             .background(Brush.verticalGradient(listOf(MySecondary, MyTertiary)))
             .padding(top = 30.dp)
     ) {
@@ -137,5 +149,50 @@ fun DrawerContent(
             selected = false,
             onClick = onProfileClicked
         )
+        Spacer(modifier = Modifier.weight(1f))
+        Developer()
+    }
+}
+
+@Composable
+fun Developer(
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Image(
+            painter = painterResource(R.drawable.developer),
+            contentDescription = "developer",
+            contentScale = ContentScale.Crop,
+            modifier = modifier.size(40.dp).clip(CircleShape).border(1.dp, MyPrimary, CircleShape)
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(
+            verticalArrangement = Arrangement.Center,
+        ){
+            Text(
+                text = "Developed by",
+                style = TextStyle(
+                    fontSize = 15.sp,
+                    color = MyPrimary,
+                    shadow = Shadow(
+                        color = Color.Black,
+                        blurRadius = 6f,
+                        offset = Offset(3f, 3f)
+                    )
+                )
+            )
+            Text(
+                text = "Engineer Fred",
+                style = TextStyle(
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MySurface
+                )
+            )
+        }
     }
 }

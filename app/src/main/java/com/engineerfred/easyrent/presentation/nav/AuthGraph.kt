@@ -14,22 +14,22 @@ import com.engineerfred.easyrent.presentation.screens.signup.SignUpScreen
 
 fun NavGraphBuilder.authGraph(navController: NavHostController) {
     navigation(
-        startDestination = AuthScreens.SignIn.dest,
+        startDestination = AuthGraphDestinations.SignIn.dest,
         route = AUTH_GRAPH
     ) {
         // Login Screen
         composable(
-            AuthScreens.SignIn.dest,
+            AuthGraphDestinations.SignIn.dest,
         ) {
             SignInScreen(
-                onNavigateToSignUp = { navController.navigate(AuthScreens.SignUp.dest) { launchSingleTop = true } },
+                onNavigateToSignUp = { navController.navigate(AuthGraphDestinations.SignUp.dest) { launchSingleTop = true } },
                 onLoginSuccess = { navController.navigateToMainGraph() }
             )
         }
 
         // SignUp Screen
         composable(
-            route = AuthScreens.SignUp.dest,
+            route = AuthGraphDestinations.SignUp.dest,
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it },
@@ -39,12 +39,12 @@ fun NavGraphBuilder.authGraph(navController: NavHostController) {
             exitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(durationMillis = 300)
+                    animationSpec = tween(durationMillis = 500)
                 )
             },
         ) {
             SignUpScreen(
-                onNavigateToSignIn = { navController.navigate(AuthScreens.SignIn.dest) { launchSingleTop = true } },
+                onNavigateToSignIn = { navController.navigate(AuthGraphDestinations.SignIn.dest) { launchSingleTop = true } },
                 onSignUpSuccess = { navController.navigateToMainGraph() }
             )
         }

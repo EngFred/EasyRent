@@ -19,9 +19,11 @@ import com.engineerfred.easyrent.data.local.entity.TenantEntity
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.util.ChannelNames
 import com.engineerfred.easyrent.util.NotificationDismissReceiver
+import com.engineerfred.easyrent.util.formatCurrency
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
+import java.util.Calendar
 
 @HiltWorker
 class UnpaidTenantsWorker @AssistedInject constructor(
@@ -38,16 +40,22 @@ class UnpaidTenantsWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         try {
-            Log.wtf("MyWorker", "UnpaidTenantsWorker started!")
 
+            Log.wtf("MyWorker", "UnpaidTenantsWorker started!")
             val userId = prefs.getUserId().firstOrNull()
 
             if ( userId == null ) {
-                Log.e(TAG, "User ID is null. Cannot sync tenants.")
+                Log.e(TAG, "User ID is null!")
                 return Result.failure()
             }
 
+            if( !isDateWithinRange() ) {
+                Log.d(TAG, "It's not yet time!")
+                return  Result.success()
+            }
+
             val unpaidTenants = cache.tenantsDao().getUnpaidTenants(userId)
+
             if (unpaidTenants.isNotEmpty()) {
                 Log.d(TAG, "Found ${unpaidTenants.size} tenants with balance!")
                 setForeground(createForegroundInfo(unpaidTenants))
@@ -73,7 +81,21 @@ class UnpaidTenantsWorker @AssistedInject constructor(
     }
 
     private fun sendNotification(unpaidTenants: List<TenantEntity>): Notification {
-        val tenantNames = unpaidTenants.joinToString(", ") { it.name.replaceFirstChar { char -> char.uppercase() } }
+
+        val tenantDetails = unpaidTenants.joinToString("\n") {
+            "• ${it.name.replaceFirstChar { char -> char.uppercase() }} - UGX.${formatCurrency(it.balance)}"
+        }
+
+        val tenantsCount = unpaidTenants.size
+
+        val notificationText = when {
+            tenantsCount == 1 -> {
+                "One tenant has an outstanding balance! Tap to view details."
+            }
+            else -> {
+                "$tenantsCount tenants have outstanding balances! Tap to view details."
+            }
+        }
 
         val dismissIntent = Intent(context, NotificationDismissReceiver::class.java).apply {
             putExtra("notification_id", NOTIFICATION_ID)
@@ -84,9 +106,10 @@ class UnpaidTenantsWorker @AssistedInject constructor(
 
         val notification = NotificationCompat.Builder(context, ChannelNames.UnpaidTenantsChannel.name)
             .setContentTitle(applicationContext.getString(R.string.app_name))
-            .setContentText("The following tenants still owe rent: $tenantNames")
+            .setContentText(notificationText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Pending Rent Payments:\n$tenantDetails"))
             .setSmallIcon(R.drawable.easy_rent_app_logo)
-            .setOngoing(true) // Make it persistent
+            .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .addAction(R.drawable.ic_close, "Seen", dismissPendingIntent)
             .build()
@@ -95,5 +118,13 @@ class UnpaidTenantsWorker @AssistedInject constructor(
         notificationManager.notify(NOTIFICATION_ID, notification)
 
         return notification
+    }
+
+    private fun isDateWithinRange(): Boolean {
+        val calendar = Calendar.getInstance()
+        val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
+        val lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+        return dayOfMonth in 25..lastDayOfMonth
     }
 }

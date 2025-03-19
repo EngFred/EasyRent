@@ -98,6 +98,7 @@ fun Profile(
     modifier: Modifier = Modifier,
     profileViewModel: ProfileViewModel = hiltViewModel(),
     onSignOutSuccess: () -> Unit,
+    onImageClicked: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState = profileViewModel.uiState.collectAsState().value
@@ -538,6 +539,12 @@ fun Profile(
                                         model = uiState.selectedImgUrl,
                                         contentDescription = "Selected Profile Picture",
                                         modifier = Modifier
+                                            .clickable {
+                                                if( uiState.isUpdating.not() ) {
+                                                    showBottomSheet = false
+                                                    onImageClicked(uiState.selectedImgUrl)
+                                                }
+                                            }
                                             .size(120.dp)
                                             .clip(CircleShape)
                                             .border(2.dp, Color.Gray, CircleShape),

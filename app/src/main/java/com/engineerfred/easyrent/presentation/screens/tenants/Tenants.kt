@@ -59,6 +59,7 @@ import com.engineerfred.easyrent.util.WorkerUtils
 fun Tenants(
     onAddTenant: () -> Unit,
     onBackClicked: () -> Unit,
+    onImageClicked: (String) -> Unit,
     tenantsViewModel: TenantsViewModel = hiltViewModel(),
     workManager: WorkManager
 ) {
@@ -200,7 +201,8 @@ fun Tenants(
                                             tenantsViewModel.deleteTenant(currentTenant)
                                         },
                                         deletedTenantId = deletingTenantId,
-                                        deletingTenant = { uiState.deletingTenant }
+                                        deletingTenant = { uiState.deletingTenant },
+                                        onImageClicked = onImageClicked
                                     )
                                 }
                             }

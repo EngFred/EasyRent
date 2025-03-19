@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddCircle
 import androidx.compose.material.icons.rounded.CloudSync
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -180,7 +183,7 @@ fun Payments(
                             ), text = "There are no payments made!")
                         }
                         else -> {
-                            Box(Modifier.fillMaxSize()){
+                            Box(Modifier.fillMaxWidth().weight(1f)){
                                 Column(
                                     Modifier.fillMaxSize()
                                 ) {
@@ -202,9 +205,9 @@ fun Payments(
                                             }
                                         }
                                     }
-                                    LazyVerticalGrid(
-                                        columns = GridCells.Fixed(2),
-                                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    LazyVerticalStaggeredGrid(
+                                        columns = StaggeredGridCells.Fixed(2),
+                                        verticalItemSpacing = 16.dp,
                                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -227,31 +230,56 @@ fun Payments(
                                     dataCount = uiState.unSyncedPayments.size,
                                     dataName = "payment"
                                 )
-                                Box(Modifier
-                                    .fillMaxWidth().padding(vertical = 24.dp, horizontal = 60.dp)
-                                    .align(Alignment.BottomCenter), contentAlignment = Alignment.Center){
-                                    Text(
-                                        "Long press or simply press on any payment to delete!",
-                                        style = TextStyle(
-                                            color = Color.Cyan,
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Center,
-                                            fontSize = 15.sp,
-                                            shadow = Shadow(
-                                                color = Color.Black,
-                                                blurRadius = 6f,
-                                                offset = Offset(2f, 2f)
-                                            )
+                            }
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    Button(
+                                        onClick = { paymentsViewModel.onEvent(PaymentsUiEvents.PaymentFilterToggled) },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (uiState.showCurrentMonthPaymentsOnly) MyPrimary else Color.LightGray,
+                                            contentColor = if (uiState.showCurrentMonthPaymentsOnly) Color.White else Color.Black
+
+                                        )
+                                    ) {
+                                        Text(text = "This Month")
+                                    }
+
+                                    Button(
+                                        onClick = { paymentsViewModel.onEvent(PaymentsUiEvents.PaymentFilterToggled) },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (!uiState.showCurrentMonthPaymentsOnly) MyPrimary else Color.LightGray,
+                                            contentColor = if (!uiState.showCurrentMonthPaymentsOnly) Color.White else Color.Black
+                                        )
+                                    ) {
+                                        Text(text = "All Payments")
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "To delete payment, simply long press on it!",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    style = TextStyle(
+                                        color = Color.Cyan,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 15.sp,
+                                        shadow = Shadow(
+                                            color = Color.Black,
+                                            blurRadius = 6f,
+                                            offset = Offset(2f, 2f)
                                         )
                                     )
-                                }
+                                )
                             }
                         }
                     }
                 }
             }
-
         }
-
     }
 }

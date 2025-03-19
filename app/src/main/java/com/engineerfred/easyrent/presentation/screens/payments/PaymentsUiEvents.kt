@@ -4,4 +4,5 @@ import com.engineerfred.easyrent.domain.modals.Payment
 
 sealed class PaymentsUiEvents {
     data class PaymentDeleted(val payment: Payment) : PaymentsUiEvents()
+    data object PaymentFilterToggled : PaymentsUiEvents()
 }

@@ -151,7 +151,6 @@ fun RoomsScreen(
                     }
                 })
             },
-
             floatingActionButton = {
                 Column(
                     modifier = Modifier.padding(bottom = 36.dp, end = 20.dp),

@@ -1,5 +1,6 @@
 package com.engineerfred.easyrent.presentation.screens.payments
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.engineerfred.easyrent.data.resource.Resource
@@ -14,6 +15,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,6 +39,10 @@ class PaymentsViewModel @Inject constructor(
         when(event) {
             is PaymentsUiEvents.PaymentDeleted -> {
                 deletePayment(event.payment)
+            }
+
+            PaymentsUiEvents.PaymentFilterToggled -> {
+                toggledPaymentFilter()
             }
         }
     }
@@ -137,4 +145,31 @@ class PaymentsViewModel @Inject constructor(
         }
     }
 
+    private fun toggledPaymentFilter() {
+        _uiState.update { state ->
+            state.copy(
+                showCurrentMonthPaymentsOnly = !state.showCurrentMonthPaymentsOnly)
+        }
+        filterPayments()
+    }
+
+    @SuppressLint("NewApi")
+    private fun filterPayments() {
+        val allPayments = _uiState.value.payments
+        if( allPayments.isNotEmpty() ) {
+            val filteredPayments = if (_uiState.value.showCurrentMonthPaymentsOnly) {
+                val currentMonth = LocalDate.now().monthValue
+                val currentYear = LocalDate.now().year
+                allPayments.filter {
+                    val paymentDate = Instant.ofEpochMilli(it.paymentDate).atZone(ZoneId.systemDefault()).toLocalDate()
+                    val paymentMonth = paymentDate.monthValue
+                    val paymentYear = paymentDate.year
+                    paymentMonth == currentMonth && paymentYear == currentYear
+                }
+            } else {
+                allPayments
+            }
+            _uiState.update { it.copy(payments = filteredPayments) }
+        }
+    }
 }

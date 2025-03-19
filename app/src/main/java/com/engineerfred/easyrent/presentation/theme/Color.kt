@@ -17,3 +17,7 @@ val MySurface = Color(0xFFFAFAFA)
 val MyError = Color(0xFFFC8989)
 val MyCardBg = Color(0xFF3B82F6).copy(alpha = 0.85f)
 val LightSkyBlue = Color(0xFF81D4FA)
+
+val DarkBlueBlack = Color(0xFF030324)
+
+

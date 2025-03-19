@@ -16,6 +16,7 @@ import dagger.assisted.AssistedInject
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.flow.firstOrNull
+import java.util.Calendar
 
 @HiltWorker
 class EndOfMonthBalanceSyncWorker @AssistedInject constructor(
@@ -41,6 +42,10 @@ class EndOfMonthBalanceSyncWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
+            if( !isEndOfMonth() ) {
+                Log.d(TAG, "Not yet the end of the month!")
+                return Result.success()
+            }
 
             val tenants = cache.tenantsDao().getAllTenants(userId).firstOrNull()
             tenants?.forEach { tenant ->
@@ -78,5 +83,12 @@ class EndOfMonthBalanceSyncWorker @AssistedInject constructor(
             Log.e(TAG, "Error checking balances: ${ex.message}")
             return Result.failure()
         }
+    }
+
+    private fun isEndOfMonth(): Boolean {
+        val calendar = Calendar.getInstance()
+        val today = calendar.get(Calendar.DAY_OF_MONTH)
+        val lastDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+        return today == lastDay
     }
 }

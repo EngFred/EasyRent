@@ -1,5 +1,6 @@
 package com.engineerfred.easyrent.presentation.screens.profile
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,6 +20,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -358,12 +362,22 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("NewApi")
     private fun fetchPayments() = viewModelScope.launch {
         getAllPaymentsUseCase.invoke().collect{ result ->
             when(result){
                 is Resource.Success -> {
+                    val payments = result.data.filter {
+                        val currentMonth = LocalDate.now().monthValue
+                        val currentYear = LocalDate.now().year
+                        val paymentDate = Instant.ofEpochMilli(it.paymentDate).atZone(ZoneId.systemDefault()).toLocalDate()
+                        val paymentMonth = paymentDate.monthValue
+                        val paymentYear = paymentDate.year
+                        paymentMonth == currentMonth && paymentYear == currentYear
+                    }
+
                     _uiState.update {
-                        it.copy( payments = result.data )
+                        it.copy( payments = payments )
                     }
                 }
                 else -> Unit
