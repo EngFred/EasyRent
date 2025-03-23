@@ -15,7 +15,7 @@ EasyRent is an **offline-first** rental management application designed for land
 
 ## 📱 Screenshots
 <!-- Add images here -->
-<img src="https://github.com/user-attachments/assets/0816ce31-a6f2-4f19-b765-8770558d2b7a" width="250"> <img src="https://github.com/user-attachments/assets/311e8129-6b35-4fad-ba35-b20e93b655b6" width="250">
+<img src="https://github.com/user-attachments/assets/0816ce31-a6f2-4f19-b765-8770558d2b7a" width="450"> <img src="https://github.com/user-attachments/assets/311e8129-6b35-4fad-ba35-b20e93b655b6" width="450">
 
 ---
 
