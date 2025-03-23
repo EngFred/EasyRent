@@ -18,12 +18,12 @@ import com.engineerfred.easyrent.data.local.db.CacheDatabase
 import com.engineerfred.easyrent.data.local.entity.TenantEntity
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.util.ChannelNames
+import com.engineerfred.easyrent.util.DateUtils
 import com.engineerfred.easyrent.util.NotificationDismissReceiver
 import com.engineerfred.easyrent.util.formatCurrency
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
-import java.util.Calendar
 
 @HiltWorker
 class UnpaidTenantsWorker @AssistedInject constructor(
@@ -49,7 +49,7 @@ class UnpaidTenantsWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
-            if( !isDateWithinRange() ) {
+            if( !DateUtils.isDateWithinRange() ) {
                 Log.d(TAG, "It's not yet time!")
                 return  Result.success()
             }
@@ -118,13 +118,5 @@ class UnpaidTenantsWorker @AssistedInject constructor(
         notificationManager.notify(NOTIFICATION_ID, notification)
 
         return notification
-    }
-
-    private fun isDateWithinRange(): Boolean {
-        val calendar = Calendar.getInstance()
-        val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
-        val lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-
-        return dayOfMonth in 25..lastDayOfMonth
     }
 }

@@ -58,12 +58,10 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        WorkerUtils.scheduleSyncWorkers(workManager)
         lifecycleScope.launch {
             repeatOnLifecycle( Lifecycle.State.STARTED ) {
                 userId = prefs.getUserId().firstOrNull()
-                if( userId != null ) {
-                    WorkerUtils.scheduleSyncWorkers(workManager)
-                }
             }
         }
 

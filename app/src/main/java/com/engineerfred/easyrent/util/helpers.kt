@@ -10,18 +10,10 @@ import com.engineerfred.easyrent.constants.Constants.SUPABASE_URL
 import com.engineerfred.easyrent.domain.modals.Payment
 import java.io.ByteArrayOutputStream
 import java.text.NumberFormat
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.Calendar
-import java.util.Date
 import java.util.Locale
-
-fun Long.toFormattedDate(pattern: String = "dd MMM yyyy"): String {
-    val sdf = SimpleDateFormat(pattern, Locale.getDefault())
-    return sdf.format(Date(this))
-}
 
 fun Uri.compressAndConvertToByteArray(contentResolver: ContentResolver, quality: Int = 55): ByteArray {
     val inputStream = contentResolver.openInputStream(this) ?: return byteArrayOf()
@@ -62,12 +54,6 @@ fun getMonthlyPaymentsTotal(payments: List<Payment>): String {
     }.sumOf { it.amount.toInt() }
 
     return formatCurrency(monthlyPayments.toFloat())
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-fun getCurrentMonthAndYear() : String {
-    val currentDate = LocalDate.now()
-    return "${currentDate.month.name}, ${currentDate.year}"
 }
 
 fun buildImageUrl(imageFileName: String, bucketName: String) =

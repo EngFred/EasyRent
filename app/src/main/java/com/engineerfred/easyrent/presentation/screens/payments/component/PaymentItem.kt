@@ -42,8 +42,8 @@ import com.engineerfred.easyrent.presentation.common.CustomAlertDialog
 import com.engineerfred.easyrent.presentation.theme.MyCardBg
 import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySurface
+import com.engineerfred.easyrent.util.DateUtils.toFormattedDate
 import com.engineerfred.easyrent.util.formatCurrency
-import com.engineerfred.easyrent.util.toFormattedDate
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

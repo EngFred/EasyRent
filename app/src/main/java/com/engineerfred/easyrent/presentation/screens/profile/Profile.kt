@@ -86,10 +86,10 @@ import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySecondary
 import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.presentation.theme.MyTertiary
+import com.engineerfred.easyrent.util.DateUtils.getCurrentMonthAndYear
+import com.engineerfred.easyrent.util.DateUtils.toFormattedDate
 import com.engineerfred.easyrent.util.formatCurrency
-import com.engineerfred.easyrent.util.getCurrentMonthAndYear
 import com.engineerfred.easyrent.util.getMonthlyPaymentsTotal
-import com.engineerfred.easyrent.util.toFormattedDate
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)

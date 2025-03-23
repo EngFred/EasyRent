@@ -49,8 +49,8 @@ import com.engineerfred.easyrent.presentation.theme.MyError
 import com.engineerfred.easyrent.presentation.theme.MyPrimary
 import com.engineerfred.easyrent.presentation.theme.MySurface
 import com.engineerfred.easyrent.presentation.theme.MyTertiary
+import com.engineerfred.easyrent.util.DateUtils.toFormattedDate
 import com.engineerfred.easyrent.util.formatCurrency
-import com.engineerfred.easyrent.util.toFormattedDate
 import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class)
