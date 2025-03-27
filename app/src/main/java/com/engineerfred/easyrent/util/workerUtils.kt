@@ -33,14 +33,13 @@ object WorkerUtils {
         context: Context,
         notificationId: Int,
         channelId: String,
-        notificationTitle: String,
-        notificationText: String
+        notificationTitle: String
     ) : ForegroundInfo {
         val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle(context.getString(R.string.app_name))
+            .setContentTitle(notificationTitle)
             .setTicker(notificationTitle)
-            .setContentText(notificationText)
             .setSmallIcon(R.drawable.easy_rent_app_logo)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .build()
 

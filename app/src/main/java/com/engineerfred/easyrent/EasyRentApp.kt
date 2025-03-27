@@ -36,7 +36,7 @@ class EasyRentApp : Application(), Configuration.Provider {
         val tenantsChannel = NotificationChannel(
             ChannelNames.TenantsChannel.name,
             "Tenants",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_LOW
         )
         val unpaidTenantsChannel = NotificationChannel(
             ChannelNames.UnpaidTenantsChannel.name,
@@ -46,18 +46,18 @@ class EasyRentApp : Application(), Configuration.Provider {
         val roomsChannel = NotificationChannel(
             ChannelNames.RoomsChannel.name,
             "Rooms",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_LOW
         )
         val paymentsChannel = NotificationChannel(
             ChannelNames.PaymentsChannel.name,
             "Payments",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_LOW
         )
 
         val expensesChannel = NotificationChannel(
             ChannelNames.ExpensesChannel.name,
             "Expenses",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_LOW
         )
 
         val notificationChannels = listOf(tenantsChannel, roomsChannel, paymentsChannel, unpaidTenantsChannel, expensesChannel)

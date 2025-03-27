@@ -53,7 +53,6 @@ class RoomsSyncWorker @AssistedInject constructor(
                     applicationContext,
                     NOTIFICATION_ID,
                     ChannelNames.RoomsChannel.name,
-                    "Rooms",
                     "Syncing rooms..."
                 )
             )

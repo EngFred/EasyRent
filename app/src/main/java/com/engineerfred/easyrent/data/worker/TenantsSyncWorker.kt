@@ -56,7 +56,6 @@ class TenantsSyncWorker @AssistedInject constructor(
                     applicationContext,
                     NOTIFICATION_ID,
                     ChannelNames.TenantsChannel.name,
-                    "Tenants",
                     "Syncing tenants..."
                 )
             )

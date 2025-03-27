@@ -53,7 +53,6 @@ class ExpensesSyncWorker @AssistedInject constructor(
                     applicationContext,
                     NOTIFICATION_ID,
                     ChannelNames.ExpensesChannel.name,
-                    "Expenses",
                     "Syncing expenses..."
                 )
             )

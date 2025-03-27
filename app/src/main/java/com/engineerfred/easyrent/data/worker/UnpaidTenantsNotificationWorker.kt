@@ -105,9 +105,9 @@ class UnpaidTenantsWorker @AssistedInject constructor(
         )
 
         val notification = NotificationCompat.Builder(context, ChannelNames.UnpaidTenantsChannel.name)
-            .setContentTitle(applicationContext.getString(R.string.app_name))
+            .setContentTitle("Pending Rent Payments")
             .setContentText(notificationText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Pending Rent Payments:\n$tenantDetails"))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(tenantDetails))
             .setSmallIcon(R.drawable.easy_rent_app_logo)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
