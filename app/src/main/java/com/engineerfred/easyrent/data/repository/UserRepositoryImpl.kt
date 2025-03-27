@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
@@ -104,9 +105,12 @@ class UserRepositoryImpl @Inject constructor(
 
             Log.i(TAG, "Usernames updated successfully!")
             return Resource.Success(Unit)
-        } catch (ex: Exception) {
-            Log.e(TAG, "Error updating user names: ${ex.message}")
-            return Resource.Error("${ex.message}")
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error: ${e.message}")
+            return Resource.Error("Network error! Please check your internet connection.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error: ${e.message}")
+            return Resource.Error("Something went wrong! Please try again later.")
         }
     }
 
@@ -135,9 +139,12 @@ class UserRepositoryImpl @Inject constructor(
             Log.i(TAG, "Hostel name updated successfully!")
             return Resource.Success(Unit)
 
-        }  catch (ex: Exception) {
-            Log.e(TAG, "Error updating hostel name: ${ex.message}")
-            return Resource.Error("${ex.message}")
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error: ${e.message}")
+            return Resource.Error("Network error! Please check your internet connection.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error: ${e.message}")
+            return Resource.Error("Something went wrong! Please try again later.")
         }
     }
 
@@ -166,9 +173,12 @@ class UserRepositoryImpl @Inject constructor(
 
             Log.d(TAG, "User telephone number updated successfully!")
             return Resource.Success(Unit)
-        }  catch (ex: Exception) {
-            Log.e(TAG, "Error updating telephone number: ${ex.message}")
-            return Resource.Error("${ex.message}")
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error: ${e.message}")
+            return Resource.Error("Network error! Please check your internet connection.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error: ${e.message}")
+            return Resource.Error("Something went wrong! Please try again later.")
         }
     }
 
@@ -219,9 +229,12 @@ class UserRepositoryImpl @Inject constructor(
             }
             Log.i(TAG, "Profile image url is empty!")
             return Resource.Error("Profile image is empty!")
-        } catch (ex: Exception) {
-            Log.e(TAG, "Error updating profile picture: ${ex.message}")
-            return Resource.Error("${ex.message}")
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error: ${e.message}")
+            return Resource.Error("Network error! Please check your internet connection.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error: ${e.message}")
+            return Resource.Error("Something went wrong! Please try again later.")
         }
     }
 }

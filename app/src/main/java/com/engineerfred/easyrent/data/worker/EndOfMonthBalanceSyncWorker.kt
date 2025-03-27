@@ -8,6 +8,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.engineerfred.easyrent.constants.Constants.TENANTS
 import com.engineerfred.easyrent.data.local.db.CacheDatabase
+import com.engineerfred.easyrent.data.mappers.toTenantDto
 import com.engineerfred.easyrent.data.mappers.toTenantEntity
 import com.engineerfred.easyrent.data.remote.dto.TenantDto
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
@@ -47,41 +48,47 @@ class EndOfMonthBalanceSyncWorker @AssistedInject constructor(
                 return Result.success()
             }
 
-            val tenants = cache.tenantsDao().getAllTenants(userId).firstOrNull()
-            tenants?.forEach { tenant ->
-                val room = cache.roomsDao().getRoomById(tenant.roomId).firstOrNull()
-                room?.let {
-                    val newBalance = if (tenant.balance == 0f) {
-                        it.monthlyRent
-                    } else {
-                        tenant.balance + it.monthlyRent
-                    }
-                    cache.tenantsDao().updateTenantBalance(newBalance, tenant.id)
-                    val result = supabase.from(TENANTS).update(
-                        {
-                            set("balance", newBalance)
-                            set("is_synced", true)
-                        }
-                    ){
-                        select()
-                        filter {
-                            eq("id", tenant.id)
-                            eq("user_id", userId)
-                        }
-                    }.decodeSingleOrNull<TenantDto>()
+            updateTenantsBalanceInCache(userId)
+            Log.d(TAG, "Updated tenants balance in cache!")
 
-                    result?.let { tenant ->
-                        cache.tenantsDao().updateTenant(tenant.toTenantEntity())
-                    }
-                }
-            }
 
-            Log.d(TAG, "Success!")
+            updateTenantsBalanceInCloud()
+            Log.d(TAG, "Updated tenants balance in cloud!")
+
+            Log.d(TAG, "Balance updated successfully!")
             return Result.success()
 
         }catch (ex: Exception) {
             Log.e(TAG, "Error checking balances: ${ex.message}")
             return Result.failure()
+        }
+    }
+
+    private suspend fun updateTenantsBalanceInCloud() {
+        try {
+            val tenantsToSync = cache.tenantsDao().getUnsyncedTenants()
+            val syncedTenants = supabase.from(TENANTS)
+                .upsert(tenantsToSync.map { it.copy(isSynced = true).toTenantDto() }) {
+                    select()
+                }.decodeList<TenantDto>()
+            cache.tenantsDao().insertRemoteTenants(syncedTenants.map { it.toTenantEntity() })
+        } catch (ex: Exception){
+            Log.e(TAG, "Error updating tenants balance in cloud: ${ex.message}")
+        }
+    }
+
+    private suspend fun updateTenantsBalanceInCache(userId: String) {
+        val tenants = cache.tenantsDao().getAllTenants(userId).firstOrNull()
+        tenants?.forEach { tenant ->
+            val room = cache.roomsDao().getRoomById(tenant.roomId).firstOrNull()
+            room?.let {
+                val newBalance = if (tenant.balance == 0f) {
+                    it.monthlyRent
+                } else {
+                    tenant.balance + it.monthlyRent
+                }
+                cache.tenantsDao().updateTenantBalance(newBalance, tenant.id)
+            }
         }
     }
 

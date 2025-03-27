@@ -27,6 +27,7 @@ data class ProfileUIState(
 
     val updateState: UserInfoUpdateStatus? = null,
     val isUpdating: Boolean = false,
+    val updateFeedbackMessage: String? = null,
     val payments: List<Payment> = emptyList(),
     val rooms: List<Room> = emptyList(),
 )

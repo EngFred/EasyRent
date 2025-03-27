@@ -1,6 +1,5 @@
 package com.engineerfred.easyrent.presentation.screens.profile
 
-import android.annotation.SuppressLint
 import android.content.ContentResolver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,9 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
+import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
@@ -156,7 +153,10 @@ class ProfileViewModel @Inject constructor(
                 val uiSateValues = _uiState.value
 
                 _uiState.update {
-                    it.copy(isUpdating = true)
+                    it.copy(
+                        isUpdating = true,
+                        updateFeedbackMessage = null
+                    )
                 }
 
                 if ( updateSate != null ) {
@@ -322,30 +322,94 @@ class ProfileViewModel @Inject constructor(
 
 
     private fun updateUserNames(firstName: String, lastName: String)  = viewModelScope.launch(Dispatchers.IO) {
-        updateUserNamesUseCase(firstName, lastName)
-        _uiState.update {
-            it.copy( isUpdating = false )
+        val result = updateUserNamesUseCase(firstName, lastName)
+        when(result) {
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = result.msg
+                    )
+                }
+            }
+            Resource.Loading -> Unit
+            is Resource.Success -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = "Names updated successfully!"
+                    )
+                }
+            }
         }
     }
 
     private fun updateUserPhoneNumber(phoneNumber: String) = viewModelScope.launch( Dispatchers.IO ) {
-        updatePhoneNumberUseCase(phoneNumber)
-        _uiState.update {
-            it.copy( isUpdating = false )
+        val result = updatePhoneNumberUseCase(phoneNumber)
+        when(result) {
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = result.msg
+                    )
+                }
+            }
+            Resource.Loading -> Unit
+            is Resource.Success -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = "Phone Number updated successfully!"
+                    )
+                }
+            }
         }
     }
 
     private fun updateUserHostelName(hostelName: String)  = viewModelScope.launch( Dispatchers.IO ) {
-        updateHostelNameUseCase(hostelName)
-        _uiState.update {
-            it.copy( isUpdating = false )
+        val result = updateHostelNameUseCase(hostelName)
+        when(result) {
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = result.msg
+                    )
+                }
+            }
+            Resource.Loading -> Unit
+            is Resource.Success -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = "Hostel name updated successfully!"
+                    )
+                }
+            }
         }
     }
 
     private fun updateUserProfileImage( imageUrl: String, contentResolver: ContentResolver ) = viewModelScope.launch( Dispatchers.IO ) {
-        updateProfileImageUseCase(imageUrl, contentResolver)
-        _uiState.update {
-            it.copy( isUpdating = false )
+        val result = updateProfileImageUseCase(imageUrl, contentResolver)
+        when(result) {
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = result.msg
+                    )
+                }
+            }
+            Resource.Loading -> Unit
+            is Resource.Success -> {
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        updateFeedbackMessage = "Profile Photo updated successfully!"
+                    )
+                }
+            }
         }
     }
 
@@ -362,27 +426,30 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    @SuppressLint("NewApi")
     private fun fetchPayments() = viewModelScope.launch {
-        getAllPaymentsUseCase.invoke().collect{ result ->
-            when(result){
+        getAllPaymentsUseCase.invoke().collect { result ->
+            when (result) {
                 is Resource.Success -> {
+                    val calendar = Calendar.getInstance()
+                    val currentMonth = calendar.get(Calendar.MONTH) + 1 // Months are 0-based in Calendar
+                    val currentYear = calendar.get(Calendar.YEAR)
+
                     val payments = result.data.filter {
-                        val currentMonth = LocalDate.now().monthValue
-                        val currentYear = LocalDate.now().year
-                        val paymentDate = Instant.ofEpochMilli(it.paymentDate).atZone(ZoneId.systemDefault()).toLocalDate()
-                        val paymentMonth = paymentDate.monthValue
-                        val paymentYear = paymentDate.year
+                        val paymentCalendar = Calendar.getInstance().apply {
+                            timeInMillis = it.paymentDate
+                        }
+                        val paymentMonth = paymentCalendar.get(Calendar.MONTH) + 1
+                        val paymentYear = paymentCalendar.get(Calendar.YEAR)
+
                         paymentMonth == currentMonth && paymentYear == currentYear
                     }
 
                     _uiState.update {
-                        it.copy( payments = payments )
+                        it.copy(payments = payments)
                     }
                 }
                 else -> Unit
             }
         }
     }
-
 }

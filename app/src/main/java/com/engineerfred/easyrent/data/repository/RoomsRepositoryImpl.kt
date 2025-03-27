@@ -52,7 +52,7 @@ class RoomsRepositoryImpl @Inject constructor(
 
             val existingRoom = cache.roomsDao().getRoomByNumber(room.roomNumber)
 
-            if ( existingRoom != null ) {
+            if ( existingRoom != null && existingRoom.isDeleted.not() ) {
                 Log.e(TAG, "Room with the same number already exists.")
                 return Resource.Error("Room with this number already exists.")
             }

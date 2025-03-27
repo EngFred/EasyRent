@@ -118,6 +118,12 @@ fun Profile(
         }
     }
 
+    LaunchedEffect(uiState.updateFeedbackMessage) {
+        if( uiState.updateFeedbackMessage != null ) {
+            Toast.makeText(context, uiState.updateFeedbackMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LaunchedEffect(key1 = uiState.signOutErr) {
         if( uiState.signOutErr != null ) {
             Toast.makeText(context, uiState.signOutErr, Toast.LENGTH_LONG).show()
