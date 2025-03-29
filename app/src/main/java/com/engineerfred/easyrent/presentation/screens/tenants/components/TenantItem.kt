@@ -48,6 +48,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.engineerfred.easyrent.R
 import com.engineerfred.easyrent.domain.modals.Tenant
+import com.engineerfred.easyrent.domain.modals.User
 import com.engineerfred.easyrent.presentation.common.CustomAlertDialog
 import com.engineerfred.easyrent.presentation.theme.MyCardBg
 import com.engineerfred.easyrent.presentation.theme.MyError
@@ -66,7 +67,8 @@ fun TenantItem(
     onDelete: (tenant: Tenant) -> Unit,
     onImageClicked: (String) -> Unit,
     deletingTenant: () -> Boolean,
-    deletedTenantId: String
+    deletedTenantId: String,
+    user: User?
 ) {
     val context = LocalContext.current
     val balanceColor = if (tenant.balance >= 0) Color(0xFF4CAF50) else Color(0xFFF44336)
@@ -85,32 +87,51 @@ fun TenantItem(
                     .zIndex(2f)
                     .clickable {
                         tenant.email?.let {
-                            if( NetworkUtils.isInternetAvailable(context) ) {
-                                EmailUtils.sendEmail(
+                            if (NetworkUtils.isInternetAvailable(context)) {
+                                EmailUtils.sendMessage(
                                     context = context,
-                                    recipient = tenant.email,
+                                    recipientEmail = tenant.email,
+                                    recipientPhone = tenant.contact,
                                     subject = "Outstanding Balance for Room ${tenant.roomNumber}",
                                     body = """
                                     Dear ${tenant.name.replaceFirstChar { it.uppercase() }},
                                     
-                                    I hope this email finds you well. We would like to bring to your attention some important details regarding your tenancy for Room ${tenant.roomNumber}.
+                                    I hope this email/message finds you well. We would like to bring to your attention some important details regarding your tenancy for Room ${tenant.roomNumber}.
                             
-                                    As of today, your current balance stands at **UGX ${formatCurrency(tenant.balance)}**. Please ensure that any outstanding payments are settled at your earliest convenience to avoid any inconveniences.
+                                    As of today, your current balance stands at **UGX ${
+                                        formatCurrency(
+                                            tenant.balance
+                                        )
+                                    }**. Please ensure that any outstanding payments are settled at your earliest convenience to avoid any inconveniences.
                             
                                     If you have already made the payment, kindly disregard this message. However, if you have any questions or require further clarification, please do not hesitate to reach out.
                             
                                     Thank you for your cooperation.
                             
-                                    Best regards,  
-                                    EasyRent Management  
-                                    Contact: -
+                                    Best regards,
+                                    ${
+                                        if(user?.hostelName != null) {
+                                            "${user.hostelName.replaceFirstChar { it.uppercase() }} hostel"
+                                        } else {
+                                            "EasyRent Management"
+                                        }
+                                    } 
+                                    Contact: ${user?.telNo ?: "-"}
                                     """.trimIndent()
                                 )
                             } else {
-                                Toast.makeText(context, "No internet connection!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "No internet connection!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
 
-                        } ?: Toast.makeText(context, "No email address found for ${tenant.name}", Toast.LENGTH_SHORT).show()
+                        } ?: Toast.makeText(
+                            context,
+                            "No email address found for ${tenant.name}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     },
                 contentAlignment = Alignment.Center
             ) {

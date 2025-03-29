@@ -10,12 +10,30 @@
 <!--    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>-->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+<!--    <queries>-->
+<!--        &lt;!&ndash; Declare email apps (Gmail, Outlook, etc.) &ndash;&gt;-->
+<!--        <intent>-->
+<!--            <action android:name="android.intent.action.SENDTO" />-->
+<!--            <data android:scheme="mailto" />-->
+<!--        </intent>-->
+<!--    </queries>-->
+
     <queries>
-        <!-- Declare email apps (Gmail, Outlook, etc.) -->
+        <!-- Email apps -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+
+        <!-- SMS apps -->
         <intent>
             <action android:name="android.intent.action.SENDTO" />
-            <data android:scheme="mailto" />
+            <data android:scheme="smsto" />
         </intent>
+
+        <!-- WhatsApp -->
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" /> <!-- WhatsApp Business -->
     </queries>
 
     <application

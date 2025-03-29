@@ -15,7 +15,6 @@ import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.util.ChannelNames
 import com.engineerfred.easyrent.util.WorkerUtils.cancelNotification
 import com.engineerfred.easyrent.util.WorkerUtils.createForeGroundInfo
-import com.engineerfred.easyrent.util.WorkerUtils.isRetryableError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.github.jan.supabase.SupabaseClient
@@ -48,17 +47,24 @@ class PaymentsSyncWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
-            setForeground(
-                createForeGroundInfo(
-                    applicationContext,
-                    NOTIFICATION_ID,
-                    ChannelNames.PaymentsChannel.name,
-                    "Syncing payments..."
+            try {
+                Log.i(TAG, "Setting foreground info for PaymentsSyncWorker...")
+                setForeground(
+                    createForeGroundInfo(
+                        applicationContext,
+                        NOTIFICATION_ID,
+                        ChannelNames.PaymentsChannel.name,
+                        "Syncing payments..."
+                    )
                 )
-            )
+                Log.i(TAG, "Foreground info set successfully for PaymentsSyncWorker!")
+            } catch (e: Exception){
+                Log.e(TAG, "Error setting foreground info for PaymentsSyncWorker: ${e.message}")
+            }
 
             val locallyDeletedPayments = cache.paymentsDao().getAllTrashedTenants(userId)
             if ( locallyDeletedPayments.isNotEmpty() ) {
+                Log.i(TAG, "Found ${locallyDeletedPayments.size} locally deleted payments in cache!!")
                 deletePaymentsFromSupabaseAndUpdateCache(locallyDeletedPayments, userId)
             }
 
@@ -74,28 +80,23 @@ class PaymentsSyncWorker @AssistedInject constructor(
 
         }catch (ex: Exception) {
             Log.e(TAG, "Error syncing payments: ${ex.message}")
-            return if (isRetryableError(ex)) {
-                Result.retry()
-            } else {
-                cancelNotification(applicationContext, NOTIFICATION_ID)
-                Result.failure()
-            }
+            cancelNotification(applicationContext, NOTIFICATION_ID)
+            return Result.failure()
         }
     }
 
     private suspend fun deletePaymentsFromSupabaseAndUpdateCache(locallyDeletedPayments: List<PaymentEntity>, userId: String){
-        locallyDeletedPayments.forEach {
-            val deletedPayment = client.from(PAYMENTS).delete{
-                select()
+        locallyDeletedPayments.forEachIndexed { index, payment ->
+            Log.i(TAG, "Deleting payment ${index + 1} of ${locallyDeletedPayments.size}...")
+            client.from(PAYMENTS).delete{
                 filter {
-                    eq("id", it.id)
+                    eq("id", payment.id)
                     eq("user_id", userId)
                 }
-            }.decodeSingleOrNull<PaymentDto>()
-
-            deletedPayment?.let {
-                cache.paymentsDao().deletePayment(it.toPaymentEntity())
             }
+            Log.i(TAG, "Deleted payment ${index + 1} of ${locallyDeletedPayments.size} from cloud! permanently deleting from cache...")
+            cache.paymentsDao().deletePayment(payment)
+            Log.i(TAG, "Deleted payment ${index + 1} of ${locallyDeletedPayments.size} from cache!")
         }
     }
 

@@ -16,7 +16,6 @@ import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.util.ChannelNames
 import com.engineerfred.easyrent.util.WorkerUtils.cancelNotification
 import com.engineerfred.easyrent.util.WorkerUtils.createForeGroundInfo
-import com.engineerfred.easyrent.util.WorkerUtils.isRetryableError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.github.jan.supabase.SupabaseClient
@@ -51,14 +50,20 @@ class TenantsSyncWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
-            setForeground(
-                createForeGroundInfo(
-                    applicationContext,
-                    NOTIFICATION_ID,
-                    ChannelNames.TenantsChannel.name,
-                    "Syncing tenants..."
+            try {
+                Log.i(TAG, "Setting foreground info for TenantsSyncWorker...")
+                setForeground(
+                    createForeGroundInfo(
+                        applicationContext,
+                        NOTIFICATION_ID,
+                        ChannelNames.TenantsChannel.name,
+                        "Syncing tenants..."
+                    )
                 )
-            )
+                Log.i(TAG, "Foreground info set successfully for TenantsSyncWorker!")
+            }catch (e: Exception){
+                Log.e(TAG, "Error setting foreground info for TenantsSyncWorker: ${e.message}")
+            }
 
             val unsyncedTenants = cache.tenantsDao().getUnsyncedTenants()
             val locallyDeletedTenants = cache.tenantsDao().getAllLocallyDeletedTenants()
@@ -73,42 +78,37 @@ class TenantsSyncWorker @AssistedInject constructor(
                 addTenantsInSupabase(unsyncedTenants)
             }
 
+            Log.i(TAG, "Tenants synced successfully!")
             cancelNotification(applicationContext, NOTIFICATION_ID)
             return Result.success()
-
-
         }catch (ex: Exception) {
             Log.e(TAG, "Error syncing tenants: ${ex.message}")
-            if ( isRetryableError(ex) ) {
-                return Result.retry()
-            } else {
-                cancelNotification(applicationContext, NOTIFICATION_ID)
-                return Result.failure()
-            }
+            return Result.failure()
         }
     }
 
     private suspend fun deleteTenantsFromSupabaseAndUpdateCache(locallyDeletedTenants: List<TenantEntity>, userId: String){
-        locallyDeletedTenants.forEach {
-            val deletedTenant = client.from(TENANTS).delete{
-                select()
+        locallyDeletedTenants.forEachIndexed { index, tenant ->
+            Log.i(TAG, "Deleting tenant ${index + 1} of ${locallyDeletedTenants.size}...")
+            client.from(TENANTS).delete{
                 filter {
-                    eq("id", it.id)
+                    eq("id", tenant.id)
                     eq("user_id", userId)
                 }
-            }.decodeSingleOrNull<TenantDto>()
+            }
 
-            deletedTenant?.let {
-                cache.tenantsDao().deleteTenant(it.id)
-                client.from(ROOMS).update(
-                    { set("is_occupied", false) }
-                ) {
-                    filter {
-                        eq("id", it.roomId)
-                        eq("user_id", userId)
-                    }
+            Log.i(TAG, "Deleted tenant ${index + 1} of ${locallyDeletedTenants.size} from cloud! permanently deleting from cache...")
+            cache.tenantsDao().deleteTenant(tenant.id)
+            Log.i(TAG, "Successfully deleted tenant from cloud! Updating room occupancy status..")
+            client.from(ROOMS).update(
+                { set("is_occupied", false) }
+            ) {
+                filter {
+                    eq("id", tenant.roomId)
+                    eq("user_id", userId)
                 }
             }
+            Log.i(TAG, "Tenant ${index+1} deleted successfully!")
         }
     }
 

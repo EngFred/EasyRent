@@ -1,12 +1,13 @@
 package com.engineerfred.easyrent.util
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
-import androidx.annotation.RequiresApi
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -23,9 +24,7 @@ import com.engineerfred.easyrent.data.worker.PaymentsSyncWorker
 import com.engineerfred.easyrent.data.worker.RoomsSyncWorker
 import com.engineerfred.easyrent.data.worker.TenantsSyncWorker
 import com.engineerfred.easyrent.data.worker.UnpaidTenantsWorker
-import java.io.IOException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 object WorkerUtils {
 
@@ -35,16 +34,8 @@ object WorkerUtils {
         channelId: String,
         notificationTitle: String
     ) : ForegroundInfo {
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle(notificationTitle)
-            .setTicker(notificationTitle)
-            .setSmallIcon(R.drawable.easy_rent_app_logo)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .build()
 
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(notificationId, notification)
+        val notification = sendNotification(context, channelId, notificationTitle, notificationId)
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ForegroundInfo(notificationId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -53,20 +44,40 @@ object WorkerUtils {
         }
     }
 
+    private fun sendNotification(
+        context: Context,
+        channelId: String,
+        notificationTitle: String,
+        notificationId: Int
+    ): Notification {
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setContentTitle(notificationTitle)
+            .setTicker(notificationTitle)
+            .setSmallIcon(R.drawable.easy_rent_app_logo)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .build()
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(notificationId, notification)
+
+        return notification
+    }
+
     fun cancelNotification(context: Context, notificationId: Int) {
         try {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancel(notificationId)
         }catch (ex: Exception) {
-            ex.printStackTrace()
+            Log.e("WorkerUtils", "Error canceling notification: ${ex.message}")
         }
     }
 
-    fun isRetryableError(ex: Exception): Boolean {
-        return ex is IOException || ex is TimeoutException
-    }
+//    fun isRetryableError(ex: Exception): Boolean {
+//        return ex is IOException || ex is TimeoutException
+//    }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun scheduleSyncWorkers(workManager: WorkManager) {
 
         val constraints = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()

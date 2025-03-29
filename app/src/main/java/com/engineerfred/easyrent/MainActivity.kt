@@ -20,7 +20,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
 import androidx.work.WorkManager
+import com.engineerfred.easyrent.data.resource.Resource
+import com.engineerfred.easyrent.domain.modals.User
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
+import com.engineerfred.easyrent.domain.usecases.user.FetchUserInfoUseCase
 import com.engineerfred.easyrent.presentation.nav.RootGraph
 import com.engineerfred.easyrent.presentation.theme.EasyRentTheme
 import com.engineerfred.easyrent.util.WorkerUtils
@@ -42,7 +45,11 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var workManager: WorkManager
 
+    @Inject
+    lateinit var fetchUserInfoUseCase: FetchUserInfoUseCase
+
     private var userId by mutableStateOf<String?>("")
+    private var currentUser by mutableStateOf<User?>(null)
 
     override fun onResume() {
         super.onResume()
@@ -62,6 +69,14 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle( Lifecycle.State.STARTED ) {
                 userId = prefs.getUserId().firstOrNull()
+                fetchUserInfoUseCase.invoke().collect{ result ->
+                    when(result){
+                        is Resource.Success -> {
+                            currentUser = result.data
+                        }
+                        else -> Unit
+                    }
+                }
             }
         }
 
@@ -74,7 +89,8 @@ class MainActivity : ComponentActivity() {
                          RootGraph(
                              userId = userId,
                              navController = navController,
-                             workManager = workManager
+                             workManager = workManager,
+                             user = currentUser
                          )
                     }
                 }

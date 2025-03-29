@@ -9,13 +9,11 @@ import com.engineerfred.easyrent.constants.Constants.EXPENSES
 import com.engineerfred.easyrent.data.local.db.CacheDatabase
 import com.engineerfred.easyrent.data.local.entity.ExpenseEntity
 import com.engineerfred.easyrent.data.mappers.toExpenseDTO
-import com.engineerfred.easyrent.data.mappers.toExpenseEntity
 import com.engineerfred.easyrent.data.remote.dto.ExpenseDto
 import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.util.ChannelNames
 import com.engineerfred.easyrent.util.WorkerUtils.cancelNotification
 import com.engineerfred.easyrent.util.WorkerUtils.createForeGroundInfo
-import com.engineerfred.easyrent.util.WorkerUtils.isRetryableError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.github.jan.supabase.SupabaseClient
@@ -48,14 +46,20 @@ class ExpensesSyncWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
-            setForeground(
-                createForeGroundInfo(
-                    applicationContext,
-                    NOTIFICATION_ID,
-                    ChannelNames.ExpensesChannel.name,
-                    "Syncing expenses..."
+            try{
+                Log.i(TAG, "Setting foreground info for ExpensesSyncWorker...")
+                setForeground(
+                    createForeGroundInfo(
+                        applicationContext,
+                        NOTIFICATION_ID,
+                        ChannelNames.ExpensesChannel.name,
+                        "Syncing expenses..."
+                    )
                 )
-            )
+                Log.i(TAG, "Foreground info set successfully for ExpensesSyncWorker!")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error setting foreground info for ExpensesSyncWorker: ${e.message}")
+            }
 
             val locallyDeletedExpenses = cache.expenseDao().getAllTrashedExpenses(userId)
             if ( locallyDeletedExpenses.isNotEmpty() ) {
@@ -75,25 +79,24 @@ class ExpensesSyncWorker @AssistedInject constructor(
 
         } catch (ex: Exception) {
             Log.e(TAG, "Error syncing expenses: ${ex.message}")
-            if ( isRetryableError(ex) ) {
-                return Result.retry()
-            } else {
-                cancelNotification(applicationContext, NOTIFICATION_ID)
-                return Result.failure()
-            }
+            cancelNotification(applicationContext, NOTIFICATION_ID)
+            return Result.failure()
         }
     }
 
     private suspend fun deleteExpensesFromSupabaseAndUpdateCache(locallyDeletedExpenses: List<ExpenseEntity>, userId: String){
-        locallyDeletedExpenses.forEach {
-            val deletedExpense = client.from(EXPENSES).delete{
-                select()
+        locallyDeletedExpenses.forEachIndexed { index, expense ->
+            Log.i(TAG, "Deleting expense ${index + 1} of ${locallyDeletedExpenses.size}...")
+            client.from(EXPENSES).delete{
                 filter {
-                    eq("id", it.id)
+                    eq("id", expense.id)
                     eq("user_id", userId)
                 }
-            }.decodeSingleOrNull<ExpenseDto>()
-            deletedExpense?.let {  cache.expenseDao().deleteExpense(deletedExpense.toExpenseEntity())  }
+            }
+
+            Log.i(TAG, "Deleted expense ${index + 1} of ${locallyDeletedExpenses.size} from cloud! permanently deleting from cache...")
+            cache.expenseDao().deleteExpense(expense)
+            Log.i(TAG, "Deleted expense ${index + 1} of ${locallyDeletedExpenses.size} from cache!")
         }
     }
 

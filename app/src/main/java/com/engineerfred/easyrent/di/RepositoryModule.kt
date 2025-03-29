@@ -14,6 +14,7 @@ import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.domain.repository.RoomsRepository
 import com.engineerfred.easyrent.domain.repository.TenantsRepository
 import com.engineerfred.easyrent.domain.repository.UserRepository
+import com.engineerfred.easyrent.domain.usecases.user.FetchUserInfoUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -99,5 +100,11 @@ object RepositoryModule {
         supabaseClient,
         prefs
     )
+
+//    @Provides
+//    @Singleton
+//    fun fetchCurrentUserUseCase(
+//        userRepository: UserRepository
+//    ): FetchUserInfoUseCase = FetchUserInfoUseCase(userRepository)
 
 }

@@ -15,7 +15,6 @@ import com.engineerfred.easyrent.domain.repository.PreferencesRepository
 import com.engineerfred.easyrent.util.ChannelNames
 import com.engineerfred.easyrent.util.WorkerUtils.cancelNotification
 import com.engineerfred.easyrent.util.WorkerUtils.createForeGroundInfo
-import com.engineerfred.easyrent.util.WorkerUtils.isRetryableError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.github.jan.supabase.SupabaseClient
@@ -48,14 +47,20 @@ class RoomsSyncWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
-            setForeground(
-                createForeGroundInfo(
-                    applicationContext,
-                    NOTIFICATION_ID,
-                    ChannelNames.RoomsChannel.name,
-                    "Syncing rooms..."
+            try {
+                Log.i(TAG, "Setting foreground info for RoomsSyncWorker...")
+                setForeground(
+                    createForeGroundInfo(
+                        applicationContext,
+                        NOTIFICATION_ID,
+                        ChannelNames.RoomsChannel.name,
+                        "Syncing rooms..."
+                    )
                 )
-            )
+                Log.i(TAG, "Foreground info set successfully for RoomsSyncWorker!")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error setting foreground info for RoomsSyncWorker: ${e.message}")
+            }
 
             val locallyDeletedRooms = cache.roomsDao().getAllLocallyDeletedRooms(userId)
             if ( locallyDeletedRooms.isNotEmpty() ) {
@@ -73,31 +78,24 @@ class RoomsSyncWorker @AssistedInject constructor(
             cancelNotification(applicationContext, NOTIFICATION_ID)
             return Result.success()
         }catch (ex: Exception) {
-            Log.e(TAG, "Error syncing rooms: ${ex.message}")
-            if ( isRetryableError(ex) ) {
-                return Result.retry()
-            } else {
-                cancelNotification(applicationContext, NOTIFICATION_ID)
-                return Result.failure()
-            }
+            cancelNotification(applicationContext, NOTIFICATION_ID)
+            return Result.failure()
         }
     }
 
     private suspend fun deleteRoomsFromSupabaseAndUpdateCache(locallyDeletedRooms: List<RoomEntity>, userId: String){
-        locallyDeletedRooms.forEach {
-            if ( it.isOccupied.not() ) {
-                val deletedRoom = client.from(ROOMS).delete{
-                    select()
-                    filter {
-                        eq("id", it.id)
-                        eq("user_id", userId)
-                    }
-                }.decodeSingleOrNull<RoomDto>()
-
-                deletedRoom?.let {
-                    cache.roomsDao().deleteRoom(it.id)
+        locallyDeletedRooms.forEachIndexed { i, r ->
+            Log.i(TAG, "Deleting room ${i + 1} from cloud...")
+            client.from(ROOMS).delete{
+                filter {
+                    eq("id", r.id)
+                    eq("user_id", userId)
                 }
             }
+
+            Log.i(TAG, "Successfully deleted from cloud. Deleting from cache ${i + 1}...")
+            cache.roomsDao().deleteRoom(r.id)
+            Log.i(TAG, "${i + 1} deleted successfully!")
         }
     }
 

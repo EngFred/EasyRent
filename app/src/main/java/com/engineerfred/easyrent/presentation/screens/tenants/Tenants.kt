@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.work.WorkManager
+import com.engineerfred.easyrent.domain.modals.User
 import com.engineerfred.easyrent.presentation.common.CustomSyncToast
 import com.engineerfred.easyrent.presentation.screens.tenants.components.TenantItem
 import com.engineerfred.easyrent.presentation.theme.MyError
@@ -61,7 +62,8 @@ fun Tenants(
     onBackClicked: () -> Unit,
     onImageClicked: (String) -> Unit,
     tenantsViewModel: TenantsViewModel = hiltViewModel(),
-    workManager: WorkManager
+    workManager: WorkManager,
+    user: User?
 ) {
 
     val uiState = tenantsViewModel.uiState.collectAsState().value
@@ -202,7 +204,8 @@ fun Tenants(
                                         },
                                         deletedTenantId = deletingTenantId,
                                         deletingTenant = { uiState.deletingTenant },
-                                        onImageClicked = onImageClicked
+                                        onImageClicked = onImageClicked,
+                                        user = user
                                     )
                                 }
                             }

@@ -5,8 +5,6 @@ import android.os.Build
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -17,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import androidx.work.WorkManager
+import com.engineerfred.easyrent.domain.modals.User
 import com.engineerfred.easyrent.presentation.screens.add_payment.AddPayment
 import com.engineerfred.easyrent.presentation.screens.add_room.AddRoomScreen
 import com.engineerfred.easyrent.presentation.screens.add_tenant.AddTenantScreen
@@ -31,6 +30,7 @@ import com.engineerfred.easyrent.presentation.screens.tenants.Tenants
 fun NavGraphBuilder.mainGraph(
     navController: NavHostController,
     workManager: WorkManager,
+    user: User?
 ) {
 
     navigation(
@@ -205,7 +205,8 @@ fun NavGraphBuilder.mainGraph(
                     navController.navigate(MainGraphDestinations.ImageView.createRoute(imageUrl)) {
                         launchSingleTop = true
                     }
-                }
+                },
+                user = user
             )
         }
 

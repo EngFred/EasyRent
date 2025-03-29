@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.work.WorkManager
+import com.engineerfred.easyrent.domain.modals.User
 import com.engineerfred.easyrent.presentation.nav.Graphs.AUTH_GRAPH
 import com.engineerfred.easyrent.presentation.nav.Graphs.MAIN_GRAPH
 import com.engineerfred.easyrent.presentation.theme.MySecondary
@@ -20,6 +21,7 @@ fun RootGraph(
     userId: String?,
     navController: NavHostController,
     workManager: WorkManager,
+    user: User?
 ) {
 
     NavHost(
@@ -28,7 +30,7 @@ fun RootGraph(
         startDestination = if( userId == null ) AUTH_GRAPH else MAIN_GRAPH
     ) {
         authGraph(navController)
-        mainGraph(navController, workManager)
+        mainGraph(navController, workManager, user)
     }
 
 }
